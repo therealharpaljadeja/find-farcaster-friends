@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const poaps = searchParams.get("poaps");
 
-    console.log("poaps", JSON.parse(poaps));
+    console.log("poaps", JSON.parse(poaps as string));
 
     if (poaps) {
         let svg = await generatePoapsImage(JSON.parse(poaps));

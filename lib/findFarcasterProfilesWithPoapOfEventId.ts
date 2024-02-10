@@ -1,6 +1,6 @@
 import { fetchQueryWithPagination, init } from "@airstack/node";
 import { gql } from "@apollo/client";
-import { gqlToString } from "./findFriendsUsingPoaps";
+import { gqlToString } from "./findPoapsForAddress";
 
 const query = gql`
     query FindFarcasterWithPoapWithEventId($eventId: String) {
