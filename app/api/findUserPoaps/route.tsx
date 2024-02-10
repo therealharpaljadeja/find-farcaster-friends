@@ -55,9 +55,8 @@ async function getResponse(req: NextRequest) {
         }
 
         let result = await findPoapsForAddress(accountAddress);
-        console.log(result);
 
-        if (result.length > 0) {
+        if (result && result.length > 0) {
             let image = `${BASE_URL}/api/poapsImage?poaps=`;
 
             let poapImageUrls = result.map((poap: any) => poap.image_url);
@@ -74,23 +73,11 @@ async function getResponse(req: NextRequest) {
                 getFrameHtml({
                     version: "vNext",
                     image: image + encodedPoapImageUrls,
-                    buttons: [
-                        {
-                            label: "1",
-                            action: "post",
-                            target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[0].eventId}`,
-                        },
-                        {
-                            label: "2",
-                            action: "post",
-                            target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[1].eventId}`,
-                        },
-                        {
-                            label: "3",
-                            action: "post",
-                            target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[2].eventId}`,
-                        },
-                    ],
+                    buttons: result.map((res: any, index: number) => ({
+                        label: index + 1,
+                        action: "post",
+                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${res.eventId}`,
+                    })),
                     postUrl:
                         `${BASE_URL}/api/findProfilesWithSamePoaps?eventIds=` +
                         encodedPoapEventIds,

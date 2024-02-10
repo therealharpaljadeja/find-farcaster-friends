@@ -1,6 +1,12 @@
-import { BASE_URL, ERROR_IMAGE_URL } from "@/lib/constants";
+import { BASE_URL, ERROR_IMAGE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
 import FindFarcasterWithPoapOfEventId from "@/lib/findFarcasterProfilesWithPoapOfEventId";
-import { getFrameHtml, getFrameMessage, validateFrameMessage } from "frames.js";
+import {
+    FrameButton,
+    FrameButtonsType,
+    getFrameHtml,
+    getFrameMessage,
+    validateFrameMessage,
+} from "frames.js";
 import { NextRequest, NextResponse } from "next/server";
 
 async function getResponse(req: NextRequest) {
@@ -41,31 +47,31 @@ async function getResponse(req: NextRequest) {
         eventIds[buttonIndex - 1]
     );
 
-    let image = `${BASE_URL}/api/friendsImage?friends=`;
+    if (farcasterProfiles && farcasterProfiles.length) {
+        let image = `${BASE_URL}/api/friendsImage?friends=`;
 
-    let encodedObject = encodeURIComponent(JSON.stringify(farcasterProfiles));
+        let encodedObject = encodeURIComponent(
+            JSON.stringify(farcasterProfiles)
+        );
+
+        return new NextResponse(
+            getFrameHtml({
+                version: "vNext",
+                image: image + encodedObject,
+                buttons: farcasterProfiles.map((profile: any) => ({
+                    action: "link",
+                    label: `@${profile.profileHandle}`,
+                    target: `https://warpcast.com/${profile.profileHandle}`,
+                })) as FrameButtonsType,
+                postUrl: "",
+            })
+        );
+    }
 
     return new NextResponse(
         getFrameHtml({
             version: "vNext",
-            image: image + encodedObject,
-            buttons: [
-                {
-                    action: "link",
-                    label: `@${farcasterProfiles[0].profileHandle}`,
-                    target: `https://warpcast.com/${farcasterProfiles[0].profileHandle}`,
-                },
-                {
-                    action: "link",
-                    label: `@${farcasterProfiles[1].profileHandle}`,
-                    target: `https://warpcast.com/${farcasterProfiles[1].profileHandle}`,
-                },
-                {
-                    action: "link",
-                    label: `@${farcasterProfiles[2].profileHandle}`,
-                    target: `https://warpcast.com/${farcasterProfiles[2].profileHandle}`,
-                },
-            ],
+            image: NO_FRIENDS_FOUND,
             postUrl: "",
         })
     );
