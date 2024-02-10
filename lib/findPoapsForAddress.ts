@@ -26,30 +26,34 @@ const query = gql`
 `;
 
 export default async function findPoapsForAddress(identity: string) {
-    let response = await fetchQueryWithPagination(gqlToString(query), {
-        address: identity,
-    });
+    try {
+        let response = await fetchQueryWithPagination(gqlToString(query), {
+            address: identity,
+        });
 
-    if (response) {
-        let { data } = response;
-        let { Poaps } = data;
-        let { Poap } = Poaps;
+        if (response) {
+            let { data } = response;
+            let { Poaps } = data;
+            let { Poap } = Poaps;
 
-        if (Poap.length > 0) {
-            let userOwnedPoaps = Poap.filter(
-                (poap: any) => !poap.isVirtualEvent
-            ).map((poap: any) => {
-                let { poapEvent } = poap;
+            if (Poap && Poap.length > 0) {
+                let userOwnedPoaps = Poap.filter(
+                    (poap: any) => !poap.isVirtualEvent
+                ).map((poap: any) => {
+                    let { poapEvent } = poap;
 
-                let { eventName, eventId, metadata } = poapEvent;
+                    let { eventName, eventId, metadata } = poapEvent;
 
-                let { image_url } = metadata;
+                    let { image_url } = metadata;
 
-                return { eventName, eventId, image_url };
-            });
+                    return { eventName, eventId, image_url };
+                });
 
-            return userOwnedPoaps.length ? userOwnedPoaps : [];
+                return userOwnedPoaps.length ? userOwnedPoaps : [];
+            }
         }
+    } catch (e) {
+        console.error(e);
     }
     return [];
 }
