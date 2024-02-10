@@ -47,18 +47,28 @@ async function getResponse(req: NextRequest) {
 
         let encodedObj = encodeURIComponent(JSON.stringify(poap_image_urls));
 
-        console.log(image + encodedObj);
-
         return new NextResponse(
             getFrameHtml({
                 version: "vNext",
                 image: image + encodedObj,
                 buttons: [
-                    { label: "1", action: "post" },
-                    { label: "2", action: "post" },
-                    { label: "3", action: "post" },
+                    {
+                        label: "1",
+                        action: "post",
+                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[0].eventId}`,
+                    },
+                    {
+                        label: "2",
+                        action: "post",
+                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[1].eventId}`,
+                    },
+                    {
+                        label: "3",
+                        action: "post",
+                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[2].eventId}`,
+                    },
                 ],
-                postUrl: `${BASE_URL}/api/mint`,
+                postUrl: `${BASE_URL}/api/findProfilesWithSamePoaps`,
             })
         );
     } catch (e) {
@@ -66,8 +76,6 @@ async function getResponse(req: NextRequest) {
 
         return new NextResponse(JSON.stringify({ status: "notok" }));
     }
-
-    return new NextResponse(JSON.stringify({ status: "ok" }));
 }
 
 export async function POST(req: NextRequest): Promise<Response> {

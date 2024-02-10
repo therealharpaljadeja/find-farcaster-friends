@@ -2,7 +2,12 @@ import { join } from "path";
 import satori from "satori";
 import fs from "fs";
 
-export const generatePoapsImage = async (poaps: string[]) => {
+type Friend = {
+    profileImage: string;
+    profileHandle: string;
+};
+
+export const generateFriendsImage = async (friends: Friend[]) => {
     const fontPath = join(process.cwd(), "norwester.otf");
     let fontData = fs.readFileSync(fontPath);
 
@@ -34,7 +39,7 @@ export const generatePoapsImage = async (poaps: string[]) => {
                         color: "white",
                     }}
                 >
-                    Poaps Found
+                    Friends Found
                 </h1>
                 <div
                     style={{
@@ -43,16 +48,28 @@ export const generatePoapsImage = async (poaps: string[]) => {
                         justifyContent: "space-between",
                     }}
                 >
-                    {poaps.map((poap, index) => (
-                        <img
-                            src={poap}
-                            key={index}
+                    {friends.map((friend, index) => (
+                        <div
                             style={{
-                                width: "300px",
-                                height: "300px",
-                                borderRadius: "100%",
+                                display: "flex",
+                                alignItems: "center",
+                                flexDirection: "column",
                             }}
-                        />
+                        >
+                            <img
+                                src={friend.profileImage}
+                                key={index}
+                                style={{
+                                    width: "300px",
+                                    height: "300px",
+                                    borderRadius: "100%",
+                                    marginBottom: "20px",
+                                }}
+                            />
+                            <p style={{ fontSize: "20px", color: "white" }}>
+                                @{friend.profileHandle}
+                            </p>
+                        </div>
                     ))}
                 </div>
                 <p
@@ -61,7 +78,7 @@ export const generatePoapsImage = async (poaps: string[]) => {
                         color: "white",
                     }}
                 >
-                    Select Poap to use to find friends
+                    Tap below buttons to follow!
                 </p>
             </div>
         </div>,
