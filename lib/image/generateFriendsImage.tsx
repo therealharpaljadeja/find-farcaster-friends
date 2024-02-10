@@ -50,6 +50,7 @@ export const generateFriendsImage = async (friends: Friend[]) => {
                 >
                     {friends.map((friend, index) => (
                         <div
+                            key={index}
                             style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -58,7 +59,6 @@ export const generateFriendsImage = async (friends: Friend[]) => {
                         >
                             <img
                                 src={friend.profileImage}
-                                key={index}
                                 style={{
                                     width: "300px",
                                     height: "300px",
