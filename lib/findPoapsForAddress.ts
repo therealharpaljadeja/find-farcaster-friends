@@ -48,7 +48,7 @@ export default async function findPoapsForAddress(identity: string) {
                 return { eventName, eventId, image_url };
             });
 
-            return userOwnedPoaps;
+            return userOwnedPoaps.length ? userOwnedPoaps : [];
         }
     }
     return [];
