@@ -55,7 +55,10 @@ export default async function FindFarcasterWithPoapOfEventId(eventId: string) {
             return null;
         });
 
-        return farcasterProfilesThatOwnPoapWithEventId.filter(Boolean);
+        let result = farcasterProfilesThatOwnPoapWithEventId.filter(Boolean);
+
+        // I have to filter the null results from Airstack so I can't put a limit of 3 on the Airstack result but instead had to put a manual limit here.
+        return [result[0], result[1], result[2]];
     }
     return [];
 }
