@@ -35,19 +35,21 @@ export default async function findPoapsForAddress(identity: string) {
         let { Poaps } = data;
         let { Poap } = Poaps;
 
-        let userOwnedPoaps = Poap.filter(
-            (poap: any) => !poap.isVirtualEvent
-        ).map((poap: any) => {
-            let { poapEvent } = poap;
+        if (Poap.length > 0) {
+            let userOwnedPoaps = Poap.filter(
+                (poap: any) => !poap.isVirtualEvent
+            ).map((poap: any) => {
+                let { poapEvent } = poap;
 
-            let { eventName, eventId, metadata } = poapEvent;
+                let { eventName, eventId, metadata } = poapEvent;
 
-            let { image_url } = metadata;
+                let { image_url } = metadata;
 
-            return { eventName, eventId, image_url };
-        });
+                return { eventName, eventId, image_url };
+            });
 
-        return userOwnedPoaps;
+            return userOwnedPoaps;
+        }
     }
     return [];
 }
