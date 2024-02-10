@@ -52,7 +52,7 @@ async function getResponse(req: NextRequest) {
         return new NextResponse(
             getFrameHtml({
                 version: "vNext",
-                image: `${BASE_URL}/api/poapsImage`,
+                image: image + encodedObj,
                 buttons: [
                     { label: "1", action: "post" },
                     { label: "2", action: "post" },
