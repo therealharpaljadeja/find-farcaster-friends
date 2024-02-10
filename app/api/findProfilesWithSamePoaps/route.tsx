@@ -1,6 +1,6 @@
 import { BASE_URL, ERROR_IMAGE_URL } from "@/lib/constants";
 import FindFarcasterWithPoapOfEventId from "@/lib/findFarcasterProfilesWithPoapOfEventId";
-import { getFrameHtml, validateFrameMessage } from "frames.js";
+import { getFrameHtml, getFrameMessage, validateFrameMessage } from "frames.js";
 import { NextRequest, NextResponse } from "next/server";
 
 async function getResponse(req: NextRequest) {
@@ -21,9 +21,11 @@ async function getResponse(req: NextRequest) {
 
     const url = new URL(req.url);
 
-    let eventId = url.searchParams.get("eventId");
+    let eventIdsFromUrl = url.searchParams.get("eventIds");
 
-    if (!eventId) {
+    let eventIds: string[] = JSON.parse(eventIdsFromUrl as string);
+
+    if (!eventIds) {
         return new NextResponse(
             getFrameHtml({
                 version: "vNext",
@@ -34,7 +36,10 @@ async function getResponse(req: NextRequest) {
         );
     }
 
-    const farcasterProfiles = await FindFarcasterWithPoapOfEventId(eventId);
+    const { buttonIndex } = await getFrameMessage(body);
+    const farcasterProfiles = await FindFarcasterWithPoapOfEventId(
+        eventIds[buttonIndex - 1]
+    );
 
     let image = `${BASE_URL}/api/friendsImage?friends=`;
 

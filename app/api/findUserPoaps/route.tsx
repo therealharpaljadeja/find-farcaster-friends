@@ -41,62 +41,43 @@ async function getResponse(req: NextRequest) {
 
         let result = await findPoapsForAddress(accountAddress);
 
-        let poap_image_urls = result.map((poap: any) => poap.image_url);
-
         let image = `${BASE_URL}/api/poapsImage?poaps=`;
 
-        let encodedObj = encodeURIComponent(JSON.stringify(poap_image_urls));
+        let poapImageUrls = result.map((poap: any) => poap.image_url);
+        let encodedPoapImageUrls = encodeURIComponent(
+            JSON.stringify(poapImageUrls)
+        );
+
+        let poapEventIds = result.map((poap: any) => poap.eventId);
+        let encodedPoapEventIds = encodeURIComponent(
+            JSON.stringify(poapEventIds)
+        );
 
         return new NextResponse(
-            `
-            <!DOCTYPE html>
-            <html>
-                <head>
-                    <meta property="fc:frame" content="vNext" />
-                    <meta property="fc:frame:image" content="${
-                        image + encodedObj
-                    }" />
-                    <meta property="fc:frame:button:1" content="1" />
-                    <meta property="fc:frame:button:1:action" content="post" />
-                    <meta property="fc:frame:button:1:action:target" content="${BASE_URL}/api/findProfilesWithSameProps?eventId=${
-                result[0].eventId
-            }" />
-                    <meta property="fc:frame:button:2" content="2" />
-                    <meta property="fc:frame:button:2:action" content="post" />
-                    <meta property="fc:frame:button:2:action:target" content="${BASE_URL}/api/findProfilesWithSameProps?eventId=${
-                result[1].eventId
-            }" />
-                    <meta property="fc:frame:button:3" content="3" />
-                    <meta property="fc:frame:button:3:action" content="post" />
-                    <meta property="fc:frame:button:3:action:target" content="${BASE_URL}/api/findProfilesWithSameProps?eventId=${
-                result[2].eventId
-            }" />
-                    <meta property="fc:frame:post_url" content="${BASE_URL}/findUserPoaps" />
-                </head>
-            </html>
-            `
-            // getFrameHtml({
-            //     version: "vNext",
-            //     image: image + encodedObj,
-            //     buttons: [
-            //         {
-            //             label: "1",
-            //             action: "post",
-            //             target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[0].eventId}`,
-            //         },
-            //         {
-            //             label: "2",
-            //             action: "post",
-            //             target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[1].eventId}`,
-            //         },
-            //         {
-            //             label: "3",
-            //             action: "post",
-            //             target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[2].eventId}`,
-            //         },
-            //     ],
-            //     postUrl: `${BASE_URL}/api/findProfilesWithSamePoaps?eventIds=`,
-            // })
+            getFrameHtml({
+                version: "vNext",
+                image: image + encodedPoapImageUrls,
+                buttons: [
+                    {
+                        label: "1",
+                        action: "post",
+                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[0].eventId}`,
+                    },
+                    {
+                        label: "2",
+                        action: "post",
+                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[1].eventId}`,
+                    },
+                    {
+                        label: "3",
+                        action: "post",
+                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[2].eventId}`,
+                    },
+                ],
+                postUrl:
+                    `${BASE_URL}/api/findProfilesWithSamePoaps?eventIds=` +
+                    encodedPoapEventIds,
+            })
         );
     } catch (e) {
         console.error(e);
