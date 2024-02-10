@@ -2,36 +2,67 @@ import { join } from "path";
 import satori from "satori";
 import fs from "fs";
 
-type Poap = {
-    eventId: string;
-    eventName: string;
-    imageUrl: string;
-};
-
-export const generatePoapsImage = async (poaps: Poap[]) => {
+export const generatePoapsImage = async (poaps: string[]) => {
     const fontPath = join(process.cwd(), "norwester.otf");
     let fontData = fs.readFileSync(fontPath);
 
     return await satori(
         <div
             style={{
-                backgroundColor: "#8A63D2",
+                padding: "40px",
                 display: "flex",
-                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "#8A63D2",
                 width: "100%",
                 height: "100%",
-                alignItems: "center",
-                justifyContent: "center",
             }}
         >
-            <h1
+            <div
                 style={{
-                    fontSize: "32",
-                    color: "white",
+                    display: "flex",
+                    flexDirection: "column",
+                    width: "100%",
+                    height: "100%",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                 }}
             >
-                Poaps Found
-            </h1>
+                <h1
+                    style={{
+                        fontSize: "48px",
+                        color: "white",
+                    }}
+                >
+                    Poaps Found
+                </h1>
+                <div
+                    style={{
+                        display: "flex",
+                        width: "1000px",
+                        justifyContent: "space-between",
+                    }}
+                >
+                    {poaps.map((poap, index) => (
+                        <img
+                            src={poap}
+                            key={index}
+                            style={{
+                                width: "300px",
+                                height: "300px",
+                            }}
+                        />
+                    ))}
+                </div>
+                <p
+                    style={{
+                        fontSize: "24px",
+                        color: "white",
+                    }}
+                >
+                    Select Poap to use to find friends
+                </p>
+            </div>
         </div>,
         {
             width: 1146,
