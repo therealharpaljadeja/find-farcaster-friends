@@ -1,6 +1,7 @@
 import {
     BASE_URL,
     ERROR_IMAGE_URL,
+    NO_POAPS_FOUND,
     WALLET_NOT_CONNECTED_IMAGE_URL,
 } from "@/lib/constants";
 import findPoapsForAddress from "@/lib/findPoapsForAddress";
@@ -48,7 +49,6 @@ async function getResponse(req: NextRequest) {
                 getFrameHtml({
                     version: "vNext",
                     image: WALLET_NOT_CONNECTED_IMAGE_URL,
-                    buttons: [{ label: "Try Again", action: "post" }],
                     postUrl: `${BASE_URL}`,
                 })
             );
@@ -56,44 +56,54 @@ async function getResponse(req: NextRequest) {
 
         let result = await findPoapsForAddress(accountAddress);
 
-        let image = `${BASE_URL}/api/poapsImage?poaps=`;
+        if (result.length > 0) {
+            let image = `${BASE_URL}/api/poapsImage?poaps=`;
 
-        let poapImageUrls = result.map((poap: any) => poap.image_url);
-        let encodedPoapImageUrls = encodeURIComponent(
-            JSON.stringify(poapImageUrls)
-        );
+            let poapImageUrls = result.map((poap: any) => poap.image_url);
+            let encodedPoapImageUrls = encodeURIComponent(
+                JSON.stringify(poapImageUrls)
+            );
 
-        let poapEventIds = result.map((poap: any) => poap.eventId);
-        let encodedPoapEventIds = encodeURIComponent(
-            JSON.stringify(poapEventIds)
-        );
+            let poapEventIds = result.map((poap: any) => poap.eventId);
+            let encodedPoapEventIds = encodeURIComponent(
+                JSON.stringify(poapEventIds)
+            );
 
-        return new NextResponse(
-            getFrameHtml({
-                version: "vNext",
-                image: image + encodedPoapImageUrls,
-                buttons: [
-                    {
-                        label: "1",
-                        action: "post",
-                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[0].eventId}`,
-                    },
-                    {
-                        label: "2",
-                        action: "post",
-                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[1].eventId}`,
-                    },
-                    {
-                        label: "3",
-                        action: "post",
-                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[2].eventId}`,
-                    },
-                ],
-                postUrl:
-                    `${BASE_URL}/api/findProfilesWithSamePoaps?eventIds=` +
-                    encodedPoapEventIds,
-            })
-        );
+            return new NextResponse(
+                getFrameHtml({
+                    version: "vNext",
+                    image: image + encodedPoapImageUrls,
+                    buttons: [
+                        {
+                            label: "1",
+                            action: "post",
+                            target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[0].eventId}`,
+                        },
+                        {
+                            label: "2",
+                            action: "post",
+                            target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[1].eventId}`,
+                        },
+                        {
+                            label: "3",
+                            action: "post",
+                            target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${result[2].eventId}`,
+                        },
+                    ],
+                    postUrl:
+                        `${BASE_URL}/api/findProfilesWithSamePoaps?eventIds=` +
+                        encodedPoapEventIds,
+                })
+            );
+        } else {
+            return new NextResponse(
+                getFrameHtml({
+                    version: "vNext",
+                    image: NO_POAPS_FOUND,
+                    postUrl: "",
+                })
+            );
+        }
     } catch (e) {
         console.error(e);
 
