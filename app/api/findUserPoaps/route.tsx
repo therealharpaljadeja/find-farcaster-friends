@@ -55,6 +55,7 @@ async function getResponse(req: NextRequest) {
         }
 
         let result = await findPoapsForAddress(accountAddress);
+        console.log(result);
 
         if (result.length > 0) {
             let image = `${BASE_URL}/api/poapsImage?poaps=`;
