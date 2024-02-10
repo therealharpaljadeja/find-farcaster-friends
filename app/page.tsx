@@ -1,10 +1,10 @@
 import { BASE_URL } from "@/lib/constants";
 import { getFrameMessage } from "frames.js";
-import { NextServerPageProps } from "frames.js/next/client";
 import {
     FrameButton,
     FrameContainer,
     FrameImage,
+    NextServerPageProps,
     getPreviousFrame,
 } from "frames.js/next/server";
 
