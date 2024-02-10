@@ -1,4 +1,8 @@
-import { BASE_URL, ERROR_IMAGE_URL } from "@/lib/constants";
+import {
+    BASE_URL,
+    ERROR_IMAGE_URL,
+    WALLET_NOT_CONNECTED_IMAGE_URL,
+} from "@/lib/constants";
 import findPoapsForAddress from "@/lib/findPoapsForAddress";
 import {
     FrameActionPayload,
@@ -29,7 +33,7 @@ async function getResponse(req: NextRequest) {
                     version: "vNext",
                     image: ERROR_IMAGE_URL,
                     buttons: [{ label: "Try Again", action: "post" }],
-                    postUrl: `${BASE_URL}/api/mint`,
+                    postUrl: `${BASE_URL}`,
                 })
             );
         }
@@ -38,6 +42,17 @@ async function getResponse(req: NextRequest) {
             fid: body.untrustedData.fid,
             options: { fallbackToCustodyAddress: true },
         });
+
+        if (!accountAddress) {
+            return new NextResponse(
+                getFrameHtml({
+                    version: "vNext",
+                    image: WALLET_NOT_CONNECTED_IMAGE_URL,
+                    buttons: [{ label: "Try Again", action: "post" }],
+                    postUrl: `${BASE_URL}`,
+                })
+            );
+        }
 
         let result = await findPoapsForAddress(accountAddress);
 

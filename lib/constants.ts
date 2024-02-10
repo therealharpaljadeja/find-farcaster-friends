@@ -4,3 +4,4 @@ export const BASE_URL =
         : "https://8c7f-2401-4900-1c94-aaba-a9f5-10bf-a5d5-b7ec.ngrok-free.app";
 
 export const ERROR_IMAGE_URL = `${BASE_URL}/error.png`;
+export const WALLET_NOT_CONNECTED_IMAGE_URL = `${BASE_URL}/wallet_not_connected.png`;
