@@ -27,11 +27,12 @@ async function getResponse(req: NextRequest) {
 
     const url = new URL(req.url);
 
-    let eventIdsFromUrl = url.searchParams.get("eventIds");
+    let eventId = url.searchParams.get("eventId");
+    console.log(eventId);
 
-    let eventIds: string[] = JSON.parse(eventIdsFromUrl as string);
+    // let eventIds: string[] = JSON.parse(eventIdsFromUrl as string);
 
-    if (!eventIds) {
+    if (!eventId) {
         return new NextResponse(
             getFrameHtml({
                 version: "vNext",
@@ -55,9 +56,7 @@ async function getResponse(req: NextRequest) {
         );
     }
 
-    const farcasterProfiles = await findFarcasterWithPoapOfEventId(
-        eventIds[buttonIndex - 1]
-    );
+    const farcasterProfiles = await findFarcasterWithPoapOfEventId(eventId);
 
     if (farcasterProfiles && farcasterProfiles.length) {
         let image = `${BASE_URL}/api/friendsImage?friends=`;

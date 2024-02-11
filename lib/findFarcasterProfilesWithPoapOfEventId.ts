@@ -28,7 +28,7 @@ const query = gql`
     }
 `;
 
-export default async function FindFarcasterWithPoapOfEventId(eventId: string) {
+export default async function findFarcasterWithPoapOfEventId(eventId: string) {
     let response = await fetchQueryWithPagination(gqlToString(query), {
         eventId,
     });

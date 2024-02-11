@@ -47,7 +47,9 @@ export default async function findPoapsForAddress(
 
             if (Poap && Poap.length > 0) {
                 let userOwnedPoaps = Poap.filter(
-                    (poap: any) => !poap.isVirtualEvent
+                    (poap: any) =>
+                        !poap.isVirtualEvent &&
+                        !poap.poapEvent.metadata.image_url.endsWith(".gif")
                 ).map((poap: any) => {
                     let { poapEvent } = poap;
 

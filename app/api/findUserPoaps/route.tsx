@@ -20,6 +20,8 @@ const redis = new Redis({
     token: process.env.REDIS_TOKEN as string,
 });
 
+async function updateCursor(key: string, value: string) {}
+
 async function getResponse(req: NextRequest) {
     let accountAddress: string | undefined;
 
@@ -35,21 +37,24 @@ async function getResponse(req: NextRequest) {
             },
         });
 
-        if (!isValid || !message) {
-            return new NextResponse(
-                getFrameHtml({
-                    version: "vNext",
-                    image: ERROR_IMAGE_URL,
-                    buttons: [{ label: "Try Again", action: "post" }],
-                    postUrl: `${BASE_URL}/api/findUserPoaps`,
-                })
-            );
-        }
+        // if (!isValid || !message) {
+        //     return new NextResponse(
+        //         getFrameHtml({
+        //             version: "vNext",
+        //             image: ERROR_IMAGE_URL,
+        //             buttons: [{ label: "Try Again", action: "post" }],
+        //             postUrl: `${BASE_URL}/api/findUserPoaps`,
+        //         })
+        //     );
+        // }
 
         accountAddress = await getAddressForFid({
-            fid: message.data.fid,
+            fid: body.untrustedData.fid,
             options: { fallbackToCustodyAddress: true },
         });
+
+        // accountAddress =
+        //     "0x22b2DD2CFEF2018D15543c484aceF6D9B5435863".toLowerCase();
 
         if (!accountAddress) {
             return new NextResponse(
@@ -61,7 +66,7 @@ async function getResponse(req: NextRequest) {
             );
         }
 
-        let fid = message.data.fid;
+        let fid = body.untrustedData.fid;
 
         let userData = (await redis.get(fid.toString())) as { cursor: string };
 
@@ -76,27 +81,30 @@ async function getResponse(req: NextRequest) {
         if (result) {
             let { userOwnedPoaps, nextCursor } = result;
 
-            console.log(result);
-
             if (userOwnedPoaps && userOwnedPoaps.length > 0) {
                 let image = `${BASE_URL}/api/poapsImage?poaps=`;
 
                 let poapImageUrls = userOwnedPoaps.map(
                     (poap: any) => poap.image_url
                 );
+
                 let encodedPoapImageUrls = encodeURIComponent(
                     JSON.stringify(poapImageUrls)
                 );
 
+                console.log(userOwnedPoaps);
                 let poapEventIds = userOwnedPoaps.map(
                     (poap: any) => poap.eventId
                 );
+
                 let encodedPoapEventIds = encodeURIComponent(
                     JSON.stringify(poapEventIds)
                 );
 
-                await redis.set(fid.toString(), { cursor: nextCursor });
-                await redis.expire(fid.toString(), 5 * 60); // Delete cursor after 5 minutes
+                redis.set(fid.toString(), { cursor: nextCursor });
+                redis.expire(fid.toString(), 5 * 60); // Delete cursor after 5 minutes
+
+                console.log(nextCursor);
 
                 return new NextResponse(
                     getFrameHtml({
@@ -107,14 +115,14 @@ async function getResponse(req: NextRequest) {
                                 (res: any, index: number) => ({
                                     label: index + 1,
                                     action: "post",
-                                    target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${res.eventId}`,
+                                    target: `${BASE_URL}/api/findProfilesWithSamePoaps?eventId=${res.eventId}`,
                                 })
                             ),
                             nextCursor
                                 ? {
                                       label: "Next ▶️",
                                       action: "post",
-                                      target: `${BASE_URL}/findUserPoaps`,
+                                      target: `${BASE_URL}/api/findUserPoaps`,
                                   }
                                 : null,
                         ] as FrameButtonsType,
