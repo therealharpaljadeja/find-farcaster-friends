@@ -20,7 +20,7 @@ async function getResponse(req: NextRequest) {
                 version: "vNext",
                 image: ERROR_IMAGE_URL,
                 buttons: [{ label: "Try Again", action: "post" }],
-                postUrl: `${BASE_URL}/api/mint`,
+                postUrl: `${BASE_URL}/api/findUserPoaps`,
             })
         );
     }
@@ -37,7 +37,7 @@ async function getResponse(req: NextRequest) {
                 version: "vNext",
                 image: ERROR_IMAGE_URL,
                 buttons: [{ label: "Try Again", action: "post" }],
-                postUrl: `${BASE_URL}/api/mint`,
+                postUrl: `${BASE_URL}/api/findUserPoaps`,
             })
         );
     }
@@ -50,7 +50,7 @@ async function getResponse(req: NextRequest) {
                 version: "vNext",
                 image: ERROR_IMAGE_URL,
                 buttons: [{ label: "Try Again", action: "post" }],
-                postUrl: `${BASE_URL}/api/mint`,
+                postUrl: `${BASE_URL}/api/findUserPoaps`,
             })
         );
     }
