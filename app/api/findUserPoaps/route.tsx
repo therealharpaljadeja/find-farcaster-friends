@@ -5,13 +5,20 @@ import {
     WALLET_NOT_CONNECTED_IMAGE_URL,
 } from "@/lib/constants";
 import findPoapsForAddress from "@/lib/findPoapsForAddress";
+import { Redis } from "@upstash/redis";
 import {
     FrameActionPayload,
+    FrameButtonsType,
     getAddressForFid,
     getFrameHtml,
     validateFrameMessage,
 } from "frames.js";
 import { NextRequest, NextResponse } from "next/server";
+
+const redis = new Redis({
+    url: process.env.REDIS_URL as string,
+    token: process.env.REDIS_TOKEN as string,
+});
 
 async function getResponse(req: NextRequest) {
     let accountAddress: string | undefined;
@@ -19,7 +26,7 @@ async function getResponse(req: NextRequest) {
     try {
         const body: FrameActionPayload = await req.json();
 
-        const { isValid } = await validateFrameMessage(body, {
+        const { isValid, message } = await validateFrameMessage(body, {
             hubHttpUrl: process.env.HUB_URL,
             hubRequestOptions: {
                 headers: {
@@ -28,7 +35,7 @@ async function getResponse(req: NextRequest) {
             },
         });
 
-        if (!isValid) {
+        if (!isValid || !message) {
             return new NextResponse(
                 getFrameHtml({
                     version: "vNext",
@@ -40,7 +47,7 @@ async function getResponse(req: NextRequest) {
         }
 
         accountAddress = await getAddressForFid({
-            fid: body.untrustedData.fid,
+            fid: message.data.fid,
             options: { fallbackToCustodyAddress: true },
         });
 
@@ -54,35 +61,77 @@ async function getResponse(req: NextRequest) {
             );
         }
 
-        let result = await findPoapsForAddress(accountAddress);
+        let fid = message.data.fid;
 
-        if (result && result.length > 0) {
-            let image = `${BASE_URL}/api/poapsImage?poaps=`;
+        let userData = (await redis.get(fid.toString())) as { cursor: string };
 
-            let poapImageUrls = result.map((poap: any) => poap.image_url);
-            let encodedPoapImageUrls = encodeURIComponent(
-                JSON.stringify(poapImageUrls)
-            );
+        let cursor;
 
-            let poapEventIds = result.map((poap: any) => poap.eventId);
-            let encodedPoapEventIds = encodeURIComponent(
-                JSON.stringify(poapEventIds)
-            );
+        if (userData) {
+            cursor = userData.cursor;
+        }
 
-            return new NextResponse(
-                getFrameHtml({
-                    version: "vNext",
-                    image: image + encodedPoapImageUrls,
-                    buttons: result.map((res: any, index: number) => ({
-                        label: index + 1,
-                        action: "post",
-                        target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${res.eventId}`,
-                    })),
-                    postUrl:
-                        `${BASE_URL}/api/findProfilesWithSamePoaps?eventIds=` +
-                        encodedPoapEventIds,
-                })
-            );
+        let result = await findPoapsForAddress(accountAddress, cursor ?? "");
+
+        if (result) {
+            let { userOwnedPoaps, nextCursor } = result;
+
+            console.log(result);
+
+            if (userOwnedPoaps && userOwnedPoaps.length > 0) {
+                let image = `${BASE_URL}/api/poapsImage?poaps=`;
+
+                let poapImageUrls = userOwnedPoaps.map(
+                    (poap: any) => poap.image_url
+                );
+                let encodedPoapImageUrls = encodeURIComponent(
+                    JSON.stringify(poapImageUrls)
+                );
+
+                let poapEventIds = userOwnedPoaps.map(
+                    (poap: any) => poap.eventId
+                );
+                let encodedPoapEventIds = encodeURIComponent(
+                    JSON.stringify(poapEventIds)
+                );
+
+                await redis.set(fid.toString(), { cursor: nextCursor });
+                await redis.expire(fid.toString(), 5 * 60); // Delete cursor after 5 minutes
+
+                return new NextResponse(
+                    getFrameHtml({
+                        version: "vNext",
+                        image: image + encodedPoapImageUrls,
+                        buttons: [
+                            ...userOwnedPoaps.map(
+                                (res: any, index: number) => ({
+                                    label: index + 1,
+                                    action: "post",
+                                    target: `${BASE_URL}/api/findProfilesWithSameProps?eventId=${res.eventId}`,
+                                })
+                            ),
+                            nextCursor
+                                ? {
+                                      label: "Next ▶️",
+                                      action: "post",
+                                      target: `${BASE_URL}/findUserPoaps`,
+                                  }
+                                : null,
+                        ] as FrameButtonsType,
+                        postUrl:
+                            `${BASE_URL}/api/findProfilesWithSamePoaps?eventIds=` +
+                            encodedPoapEventIds,
+                    })
+                );
+            } else {
+                return new NextResponse(
+                    getFrameHtml({
+                        version: "vNext",
+                        image: NO_POAPS_FOUND,
+                        postUrl: "",
+                    })
+                );
+            }
         } else {
             return new NextResponse(
                 getFrameHtml({
@@ -94,7 +143,6 @@ async function getResponse(req: NextRequest) {
         }
     } catch (e) {
         console.error(e);
-
         return new NextResponse(JSON.stringify({ status: "notok" }));
     }
 }
@@ -102,20 +150,3 @@ async function getResponse(req: NextRequest) {
 export async function POST(req: NextRequest): Promise<Response> {
     return getResponse(req);
 }
-
-// export const GET = async (req: Request, res: Response) => {
-//     const { searchParams } = new URL(req.url);
-//     const address = searchParams.get("address") ?? undefined;
-//     if (!address) {
-//         return new Response("Error: no address", { status: 400 });
-//     }
-
-//     const commonPoaps = await findFriendsUsingPoaps(address);
-
-//     return new Response(JSON.stringify({ userOwnedPoaps: commonPoaps }), {
-//         status: 200,
-//         headers: {
-//             "Content-type": "application/json",
-//         },
-//     });
-// };

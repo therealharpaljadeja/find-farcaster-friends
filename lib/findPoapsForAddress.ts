@@ -4,9 +4,10 @@ import { DocumentNode, gql } from "@apollo/client";
 init(process.env.AIRSTACK_API_KEY || "");
 
 const query = gql`
-    query FindPoapsForAddress($address: Identity) {
+    query FindPoapsForAddress($address: Identity, $cursor: String) {
         Poaps(
             input: {
+                cursor: $cursor
                 blockchain: ALL
                 limit: 3
                 filter: { owner: { _eq: $address } }
@@ -21,20 +22,28 @@ const query = gql`
                     metadata
                 }
             }
+            pageInfo {
+                nextCursor
+            }
         }
     }
 `;
 
-export default async function findPoapsForAddress(identity: string) {
+export default async function findPoapsForAddress(
+    identity: string,
+    cursor: string = ""
+) {
     try {
         let response = await fetchQueryWithPagination(gqlToString(query), {
             address: identity,
+            cursor: cursor ?? "",
         });
 
         if (response) {
             let { data } = response;
             let { Poaps } = data;
-            let { Poap } = Poaps;
+            let { Poap, pageInfo } = Poaps;
+            let { nextCursor } = pageInfo;
 
             if (Poap && Poap.length > 0) {
                 let userOwnedPoaps = Poap.filter(
@@ -49,13 +58,15 @@ export default async function findPoapsForAddress(identity: string) {
                     return { eventName, eventId, image_url };
                 });
 
-                return userOwnedPoaps.length ? userOwnedPoaps : [];
+                return userOwnedPoaps.length
+                    ? { userOwnedPoaps, nextCursor }
+                    : null;
             }
         }
     } catch (e) {
         console.error(e);
     }
-    return [];
+    return null;
 }
 
 export const gqlToString = (gqlQuery: DocumentNode): string =>
