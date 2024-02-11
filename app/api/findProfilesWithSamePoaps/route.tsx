@@ -1,5 +1,5 @@
 import { BASE_URL, ERROR_IMAGE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
-import FindFarcasterWithPoapOfEventId from "@/lib/findFarcasterProfilesWithPoapOfEventId";
+import findFarcasterWithPoapOfEventId from "@/lib/findFarcasterProfilesWithPoapOfEventId";
 import {
     FrameButton,
     FrameButtonsType,
@@ -43,7 +43,19 @@ async function getResponse(req: NextRequest) {
     }
 
     const { buttonIndex } = await getFrameMessage(body);
-    const farcasterProfiles = await FindFarcasterWithPoapOfEventId(
+
+    if (buttonIndex > 3) {
+        return new NextResponse(
+            getFrameHtml({
+                version: "vNext",
+                image: ERROR_IMAGE_URL,
+                buttons: [{ label: "Try Again", action: "post" }],
+                postUrl: `${BASE_URL}/api/mint`,
+            })
+        );
+    }
+
+    const farcasterProfiles = await findFarcasterWithPoapOfEventId(
         eventIds[buttonIndex - 1]
     );
 
