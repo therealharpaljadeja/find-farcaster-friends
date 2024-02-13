@@ -1,7 +1,8 @@
 import { BASE_URL, ERROR_IMAGE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
 import findFarcasterWithPoapOfEventId from "@/lib/findFarcasterProfilesWithPoapOfEventId";
+import { Redis } from "@upstash/redis";
 import {
-    FrameButton,
+    FrameActionPayload,
     FrameButtonsType,
     getFrameHtml,
     getFrameMessage,
@@ -9,29 +10,21 @@ import {
 } from "frames.js";
 import { NextRequest, NextResponse } from "next/server";
 
+const redis = new Redis({
+    url: process.env.REDIS_URL as string,
+    token: process.env.REDIS_TOKEN as string,
+});
+
 async function getResponse(req: NextRequest) {
-    const body = await req.json();
-
-    const isValid = await validateFrameMessage(body);
-
-    if (!isValid) {
-        return new NextResponse(
-            getFrameHtml({
-                version: "vNext",
-                image: ERROR_IMAGE_URL,
-                buttons: [{ label: "Try Again", action: "post" }],
-                postUrl: `${BASE_URL}/api/findUserPoaps`,
-            })
-        );
-    }
+    const body: FrameActionPayload = await req.json();
 
     const url = new URL(req.url);
 
-    let eventIdsFromUrl = url.searchParams.get("eventIds");
+    let eventId = url.searchParams.get("eventId");
 
-    let eventIds: string[] = JSON.parse(eventIdsFromUrl as string);
+    console.log(eventId);
 
-    if (!eventIds) {
+    if (!eventId) {
         return new NextResponse(
             getFrameHtml({
                 version: "vNext",
@@ -42,39 +35,63 @@ async function getResponse(req: NextRequest) {
         );
     }
 
-    const { buttonIndex } = await getFrameMessage(body);
+    let userData = (await redis.get(body.untrustedData.fid.toString())) as {
+        friendsCursor: number;
+        friends: {
+            profileHandle: string;
+            profileImage: string;
+        }[];
+    };
 
-    if (buttonIndex > 3) {
-        return new NextResponse(
-            getFrameHtml({
-                version: "vNext",
-                image: ERROR_IMAGE_URL,
-                buttons: [{ label: "Try Again", action: "post" }],
-                postUrl: `${BASE_URL}/api/findUserPoaps`,
-            })
-        );
+    let cursor;
+    let friends;
+
+    if (!userData.friends) {
+        friends = await findFarcasterWithPoapOfEventId(eventId);
+        cursor = 0;
+        userData = { ...userData, friends, friendsCursor: cursor };
+    } else {
+        friends = userData.friends;
+        cursor = userData.friendsCursor;
     }
 
-    const farcasterProfiles = await findFarcasterWithPoapOfEventId(
-        eventIds[buttonIndex - 1]
-    );
-
-    if (farcasterProfiles && farcasterProfiles.length) {
+    if (friends && friends.length) {
         let image = `${BASE_URL}/api/friendsImage?friends=`;
 
-        let encodedObject = encodeURIComponent(
-            JSON.stringify(farcasterProfiles)
-        );
+        let start = cursor;
+        let end =
+            cursor + 3 <= userData.friends.length
+                ? cursor + 3
+                : userData.friends.length;
+
+        let userFriends = friends.slice(start, end);
+
+        let encodedObject = encodeURIComponent(JSON.stringify(userFriends));
+
+        await redis.set(body.untrustedData.fid.toString(), {
+            ...userData,
+            friendsCursor: end,
+        });
+
+        let buttons = userFriends.map((res: any, index: number) => ({
+            label: `@${res.profileHandle}`,
+            action: "post",
+            target: `${BASE_URL}/api/findProfilesWithSamePoaps?eventId=${res.eventId}`,
+        }));
+
+        if (end < userData.friends.length) {
+            buttons.push({
+                label: "Next ▶️",
+                action: "post",
+                target: `${BASE_URL}/api/findProfilesWithSamePoaps?eventId=${eventId}`,
+            });
+        }
 
         return new NextResponse(
             getFrameHtml({
                 version: "vNext",
                 image: image + encodedObject,
-                buttons: farcasterProfiles.map((profile: any) => ({
-                    action: "link",
-                    label: `@${profile.profileHandle}`,
-                    target: `https://warpcast.com/${profile.profileHandle}`,
-                })) as FrameButtonsType,
+                buttons: buttons as FrameButtonsType,
                 postUrl: "",
             })
         );

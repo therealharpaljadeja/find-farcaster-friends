@@ -43,6 +43,8 @@ export default async function findFarcasterWithPoapOfEventId(eventId: string) {
 
             let { socials } = owner;
 
+            console.log("socials", socials);
+
             if (socials) {
                 let { profileHandle, profileImage } = socials[0];
                 return {
@@ -57,8 +59,7 @@ export default async function findFarcasterWithPoapOfEventId(eventId: string) {
 
         let result = farcasterProfilesThatOwnPoapWithEventId.filter(Boolean);
 
-        // I have to filter the null results from Airstack so I can't put a limit of 3 on the Airstack result but instead had to put a manual limit here.
-        return [result[0], result[1], result[2]];
+        return result;
     }
     return [];
 }
