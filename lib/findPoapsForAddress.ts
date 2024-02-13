@@ -37,6 +37,7 @@ export default async function findPoapsForAddress(identity: string) {
 
         if (response) {
             let { data } = response;
+
             let { Poaps } = data;
             let { Poap } = Poaps;
 

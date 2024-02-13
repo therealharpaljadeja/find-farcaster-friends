@@ -1,5 +1,6 @@
 import { fetchQueryWithPagination, init } from "@airstack/node";
 import { DocumentNode, gql } from "@apollo/client";
+import { Friend } from "./findFarcasterProfilesWithPoapOfEventId";
 
 init(process.env.AIRSTACK_API_KEY || "");
 
@@ -23,13 +24,21 @@ const query = gql`
                         profileHandle
                         profileImage
                     }
+                    xmtp {
+                        isXMTPEnabled
+                        owner {
+                            identity
+                        }
+                    }
                 }
             }
         }
     }
 `;
 
-export default async function findLensFrensOnFarcaster(identity: string) {
+export default async function findLensFrensOnFarcaster(
+    identity: string
+): Promise<Friend[] | []> {
     try {
         let response = await fetchQueryWithPagination(gqlToString(query), {
             identity,
@@ -48,28 +57,34 @@ export default async function findLensFrensOnFarcaster(identity: string) {
                     (following: any) =>
                         following.followingAddress.socials !== null
                 )
-                    .filter(
-                        (following: any) =>
-                            !following.followingAddress.socials[0].profileImage.endsWith(
-                                ".gif"
-                            )
+                    .filter((following: any) =>
+                        following.followingAddress.socials[0].profileImage.endsWith(
+                            ".jpg"
+                        )
                     )
-                    .map(
-                        (following: any) =>
-                            following.followingAddress.socials[0]
-                    );
-
-                console.log(result);
+                    .map((following: any) => {
+                        if (following.xmtp.isXMTPEnabled) {
+                            return {
+                                ...following.followingAddress.socials[0],
+                                isXMTPEnabled: following.xmtp.isXMTPEnabled,
+                                xmtpReceiver: following.xmtp.owner.identity,
+                            };
+                        }
+                        return {
+                            ...following.followingAddress.socials[0],
+                            isXMTPEnabled: false,
+                        };
+                    });
 
                 return result;
             }
 
-            return null;
+            return [];
         }
     } catch (e) {
         console.error(e);
     }
-    return null;
+    return [];
 }
 
 export const gqlToString = (gqlQuery: DocumentNode): string =>

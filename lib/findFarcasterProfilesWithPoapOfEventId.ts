@@ -2,6 +2,14 @@ import { fetchQueryWithPagination, init } from "@airstack/node";
 import { gql } from "@apollo/client";
 import { gqlToString } from "./findPoapsForAddress";
 
+export type Friend = {
+    eventName: string;
+    profileHandle: string;
+    profileImage: string;
+    isXMTPEnabled: boolean;
+    xmtpReceiver: string;
+};
+
 const query = gql`
     query FindFarcasterWithPoapWithEventId($eventId: String) {
         Poaps(
@@ -22,13 +30,21 @@ const query = gql`
                         profileHandle
                         profileImage
                     }
+                    xmtp {
+                        isXMTPEnabled
+                        owner {
+                            identity
+                        }
+                    }
                 }
             }
         }
     }
 `;
 
-export default async function findFarcasterWithPoapOfEventId(eventId: string) {
+export default async function findFarcasterWithPoapOfEventId(
+    eventId: string
+): Promise<Friend[] | []> {
     let response = await fetchQueryWithPagination(gqlToString(query), {
         eventId,
     });
@@ -41,16 +57,25 @@ export default async function findFarcasterWithPoapOfEventId(eventId: string) {
         let farcasterProfilesThatOwnPoapWithEventId = Poap.map((poap: any) => {
             let { owner, poapEvent } = poap;
 
-            let { socials } = owner;
-
-            console.log("socials", socials);
+            let { socials, xmtp } = owner;
 
             if (socials) {
                 let { profileHandle, profileImage } = socials[0];
+
+                let isXMTPEnabled = false;
+                let xmtpReceiver;
+
+                if (xmtp) {
+                    isXMTPEnabled = xmtp[0].isXMTPEnabled;
+                    xmtpReceiver = xmtp[0].owner.identity;
+                }
+
                 return {
                     eventName: poapEvent.eventName,
                     profileHandle,
                     profileImage,
+                    isXMTPEnabled,
+                    xmtpReceiver,
                 };
             }
 

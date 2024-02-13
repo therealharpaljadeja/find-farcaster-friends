@@ -1,12 +1,15 @@
 import { BASE_URL, ERROR_IMAGE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
-import findFarcasterWithPoapOfEventId from "@/lib/findFarcasterProfilesWithPoapOfEventId";
+import findFarcasterWithPoapOfEventId, {
+    Friend,
+} from "@/lib/findFarcasterProfilesWithPoapOfEventId";
 import { Redis } from "@upstash/redis";
+import { Client } from "@xmtp/xmtp-js";
+import { ethers } from "ethers";
 import {
     FrameActionPayload,
     FrameButtonsType,
     getFrameHtml,
-    getFrameMessage,
-    validateFrameMessage,
+    getUserDataForFid,
 } from "frames.js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -15,14 +18,27 @@ const redis = new Redis({
     token: process.env.REDIS_TOKEN as string,
 });
 
+let wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string);
+
 async function getResponse(req: NextRequest) {
+    const xmtp = await Client.create(wallet, {
+        env: "production",
+    });
+
     const body: FrameActionPayload = await req.json();
+
+    const profileDetail = await getUserDataForFid({
+        fid: body.untrustedData.fid,
+    });
+
+    let username;
+    if (profileDetail) {
+        username = profileDetail.username;
+    }
 
     const url = new URL(req.url);
 
     let eventId = url.searchParams.get("eventId");
-
-    console.log(eventId);
 
     if (!eventId) {
         return new NextResponse(
@@ -37,16 +53,14 @@ async function getResponse(req: NextRequest) {
 
     let userData = (await redis.get(body.untrustedData.fid.toString())) as {
         friendsCursor: number;
-        friends: {
-            profileHandle: string;
-            profileImage: string;
-        }[];
+        friends: Friend[];
     };
 
     let cursor;
     let friends;
 
     if (!userData.friends) {
+        // If Data is not already available in Redis then fetch it
         friends = await findFarcasterWithPoapOfEventId(eventId);
         cursor = 0;
         userData = { ...userData, friends, friendsCursor: cursor };
@@ -68,10 +82,23 @@ async function getResponse(req: NextRequest) {
 
         let encodedObject = encodeURIComponent(JSON.stringify(userFriends));
 
+        // Update cursor in Redis for next fetch
         await redis.set(body.untrustedData.fid.toString(), {
             ...userData,
             friendsCursor: end,
         });
+
+        // Send XMTP messages
+        for await (let friend of userFriends) {
+            if (friend.isXMTPEnabled) {
+                const conv = await xmtp.conversations.newConversation(
+                    friend.xmtpReceiver
+                );
+                conv.send(
+                    `Hey @${friend.profileHandle},\n@${username} found you using a Farcaster Frame \n\nCheck out @${username}'s profile here: https://warpcast.com/${username} \n\nCheck out the frame here: https://warpcast.com/harpaljadeja/0xc9d767b1`
+                );
+            }
+        }
 
         let buttons = userFriends.map((res: any, index: number) => ({
             label: `@${res.profileHandle}`,

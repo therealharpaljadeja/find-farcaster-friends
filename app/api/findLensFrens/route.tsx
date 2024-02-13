@@ -1,7 +1,15 @@
 import { BASE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
+import { Friend } from "@/lib/findFarcasterProfilesWithPoapOfEventId";
 import findLensFrensOnFarcaster from "@/lib/findLensFrensOnFarcaster";
 import { Redis } from "@upstash/redis";
-import { FrameActionPayload, FrameButtonsType, getFrameHtml } from "frames.js";
+import { Client } from "@xmtp/xmtp-js";
+import { ethers } from "ethers";
+import {
+    FrameActionPayload,
+    FrameButtonsType,
+    getFrameHtml,
+    getUserDataForFid,
+} from "frames.js";
 import { NextRequest, NextResponse } from "next/server";
 
 const redis = new Redis({
@@ -9,16 +17,28 @@ const redis = new Redis({
     token: process.env.REDIS_TOKEN as string,
 });
 
+let wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string);
+
 async function getResponse(req: NextRequest) {
+    const xmtp = await Client.create(wallet, {
+        env: "production",
+    });
+
     const body: FrameActionPayload = await req.json();
 
     const fid = body.untrustedData.fid;
 
+    const profileDetail = await getUserDataForFid({
+        fid,
+    });
+
+    let username;
+    if (profileDetail) {
+        username = profileDetail.username;
+    }
+
     let userData = (await redis.get(fid.toString())) as {
-        farcasterProfilesFromLens: {
-            profileImage: string;
-            profileHandle: string;
-        }[];
+        farcasterProfilesFromLens: Friend[];
         cursor: number;
     };
 
@@ -54,6 +74,18 @@ async function getResponse(req: NextRequest) {
             label: `@${profile.profileHandle}`,
             target: `https://warpcast.com/${profile.profileHandle}`,
         }));
+
+        // Send XMTP messages
+        for await (let friend of result) {
+            if (friend.isXMTPEnabled) {
+                const conv = await xmtp.conversations.newConversation(
+                    friend.xmtpReceiver
+                );
+                conv.send(
+                    `@${username} found you using a Farcaster Frame \n\nCheck out @${username}'s profile here: https://warpcast.com/${username} \n\nCheck out the frame here: https://warpcast.com/harpaljadeja/0xc9d767b1`
+                );
+            }
+        }
 
         if (end < farcasterProfilesFromLens.length) {
             buttons.push({
