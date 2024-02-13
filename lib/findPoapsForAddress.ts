@@ -42,27 +42,29 @@ export default async function findPoapsForAddress(
         if (response) {
             let { data } = response;
             let { Poaps } = data;
-            let { Poap, pageInfo } = Poaps;
-            let { nextCursor } = pageInfo;
+            if (Poaps) {
+                let { Poap, pageInfo } = Poaps;
+                let { nextCursor } = pageInfo;
 
-            if (Poap && Poap.length > 0) {
-                let userOwnedPoaps = Poap.filter(
-                    (poap: any) =>
-                        !poap.isVirtualEvent &&
-                        !poap.poapEvent.metadata.image_url.endsWith(".gif")
-                ).map((poap: any) => {
-                    let { poapEvent } = poap;
+                if (Poap && Poap.length > 0) {
+                    let userOwnedPoaps = Poap.filter(
+                        (poap: any) =>
+                            !poap.isVirtualEvent &&
+                            !poap.poapEvent.metadata.image_url.endsWith(".gif")
+                    ).map((poap: any) => {
+                        let { poapEvent } = poap;
 
-                    let { eventName, eventId, metadata } = poapEvent;
+                        let { eventName, eventId, metadata } = poapEvent;
 
-                    let { image_url } = metadata;
+                        let { image_url } = metadata;
 
-                    return { eventName, eventId, image_url };
-                });
+                        return { eventName, eventId, image_url };
+                    });
 
-                return userOwnedPoaps.length
-                    ? { userOwnedPoaps, nextCursor }
-                    : null;
+                    return userOwnedPoaps.length
+                        ? { userOwnedPoaps, nextCursor }
+                        : null;
+                }
             }
         }
     } catch (e) {

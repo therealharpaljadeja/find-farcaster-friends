@@ -34,12 +34,17 @@ export default async function Home({
             Find Farcaster Friends using Poaps
             <FrameContainer
                 pathname={`${BASE_URL}/api/findUserPoaps`}
-                postUrl={`${BASE_URL}/api/findUserPoaps`}
                 state={null}
+                postUrl=""
                 previousFrame={previousFrame}
             >
                 <FrameImage src={`${BASE_URL}/base.png`} />
-                <FrameButton>Find My Poaps</FrameButton>
+                <FrameButton target={`${BASE_URL}/api/findUserPoaps`}>
+                    Find My Poaps
+                </FrameButton>
+                <FrameButton target={`${BASE_URL}/api/findLensFrens`}>
+                    Find My Lens Frens
+                </FrameButton>
             </FrameContainer>
         </div>
     );
