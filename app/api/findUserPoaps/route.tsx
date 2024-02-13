@@ -32,8 +32,6 @@ async function getResponse(req: NextRequest) {
             options: { fallbackToCustodyAddress: true },
         });
 
-        console.log(accountAddress);
-
         if (!accountAddress) {
             return new NextResponse(
                 getFrameHtml({
@@ -75,8 +73,6 @@ async function getResponse(req: NextRequest) {
                     : userData.userOwnedPoaps.length;
             let userOwnedPoaps = result.slice(start, end);
 
-            console.log(userOwnedPoaps);
-
             if (userOwnedPoaps && userOwnedPoaps.length > 0) {
                 let image = `${BASE_URL}/api/poapsImage?poaps=`;
 
@@ -96,12 +92,12 @@ async function getResponse(req: NextRequest) {
                     JSON.stringify(poapEventIds)
                 );
 
-                await redis.set(fid.toString(), {
+                redis.set(fid.toString(), {
                     ...userData,
                     poapCursor: end,
                 });
 
-                await redis.expire(fid.toString(), 5 * 60); // Delete cursor after 5 minutes
+                redis.expire(fid.toString(), 5 * 60); // Delete cursor after 5 minutes
 
                 let buttons = userOwnedPoaps.map((res: any, index: number) => ({
                     label: index + 1,
