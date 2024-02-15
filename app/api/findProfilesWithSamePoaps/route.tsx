@@ -1,7 +1,6 @@
 import { BASE_URL, ERROR_IMAGE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
 import findFarcasterWithPoapOfEventId from "@/lib/findFarcasterProfilesWithPoapOfEventId";
 import {
-    FrameButton,
     FrameButtonsType,
     getFrameHtml,
     getFrameMessage,

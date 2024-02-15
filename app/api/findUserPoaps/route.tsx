@@ -20,8 +20,6 @@ const redis = new Redis({
     token: process.env.REDIS_TOKEN as string,
 });
 
-async function updateCursor(key: string, value: string) {}
-
 async function getResponse(req: NextRequest) {
     let accountAddress: string | undefined;
 
@@ -37,24 +35,21 @@ async function getResponse(req: NextRequest) {
             },
         });
 
-        // if (!isValid || !message) {
-        //     return new NextResponse(
-        //         getFrameHtml({
-        //             version: "vNext",
-        //             image: ERROR_IMAGE_URL,
-        //             buttons: [{ label: "Try Again", action: "post" }],
-        //             postUrl: `${BASE_URL}/api/findUserPoaps`,
-        //         })
-        //     );
-        // }
+        if (!isValid || !message) {
+            return new NextResponse(
+                getFrameHtml({
+                    version: "vNext",
+                    image: ERROR_IMAGE_URL,
+                    buttons: [{ label: "Try Again", action: "post" }],
+                    postUrl: `${BASE_URL}/api/findUserPoaps`,
+                })
+            );
+        }
 
         accountAddress = await getAddressForFid({
             fid: body.untrustedData.fid,
             options: { fallbackToCustodyAddress: true },
         });
-
-        // accountAddress =
-        //     "0x22b2DD2CFEF2018D15543c484aceF6D9B5435863".toLowerCase();
 
         if (!accountAddress) {
             return new NextResponse(
