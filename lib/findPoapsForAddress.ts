@@ -4,12 +4,10 @@ import { DocumentNode, gql } from "@apollo/client";
 init(process.env.AIRSTACK_API_KEY || "");
 
 const query = gql`
-    query FindPoapsForAddress($address: Identity, $cursor: String) {
+    query FindPoapsForAddress($address: Identity) {
         Poaps(
             input: {
-                cursor: $cursor
                 blockchain: ALL
-                limit: 3
                 filter: { owner: { _eq: $address } }
                 order: { createdAtBlockNumber: DESC }
             }
@@ -19,52 +17,48 @@ const query = gql`
                     eventId
                     eventName
                     isVirtualEvent
-                    metadata
+                    contentValue {
+                        image {
+                            medium
+                            small
+                        }
+                    }
                 }
-            }
-            pageInfo {
-                nextCursor
             }
         }
     }
 `;
 
-export default async function findPoapsForAddress(
-    identity: string,
-    cursor: string = ""
-) {
+export default async function findPoapsForAddress(identity: string) {
     try {
         let response = await fetchQueryWithPagination(gqlToString(query), {
             address: identity,
-            cursor: cursor ?? "",
         });
 
         if (response) {
             let { data } = response;
             let { Poaps } = data;
-            if (Poaps) {
-                let { Poap, pageInfo } = Poaps;
-                let { nextCursor } = pageInfo;
+            let { Poap } = Poaps;
 
-                if (Poap && Poap.length > 0) {
-                    let userOwnedPoaps = Poap.filter(
-                        (poap: any) =>
-                            !poap.isVirtualEvent &&
-                            !poap.poapEvent.metadata.image_url.endsWith(".gif")
-                    ).map((poap: any) => {
-                        let { poapEvent } = poap;
+            if (Poap && Poap.length > 0) {
+                let userOwnedPoaps = Poap.filter(
+                    (poap: any) =>
+                        !poap.isVirtualEvent &&
+                        !poap.poapEvent.contentValue.image.small.endsWith(
+                            ".gif"
+                        )
+                ).map((poap: any) => {
+                    let { poapEvent } = poap;
 
-                        let { eventName, eventId, metadata } = poapEvent;
+                    let { eventName, eventId, contentValue } = poapEvent;
 
-                        let { image_url } = metadata;
+                    let { image } = contentValue;
+                    let { small: image_url } = image;
 
-                        return { eventName, eventId, image_url };
-                    });
+                    return { eventName, eventId, image_url };
+                });
 
-                    return userOwnedPoaps.length
-                        ? { userOwnedPoaps, nextCursor }
-                        : null;
-                }
+                return userOwnedPoaps;
             }
         }
     } catch (e) {
