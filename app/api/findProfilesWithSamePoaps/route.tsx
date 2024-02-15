@@ -75,8 +75,8 @@ async function getResponse(req: NextRequest) {
 
         let buttons = userFriends.map((res: any, index: number) => ({
             label: `@${res.profileHandle}`,
-            action: "post",
-            target: `${BASE_URL}/api/findProfilesWithSamePoaps?eventId=${res.eventId}`,
+            action: "link",
+            target: `https://warpcast.com/${res.profileHandle}`,
         }));
 
         if (end < userData.friends.length) {
