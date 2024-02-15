@@ -95,6 +95,7 @@ async function getResponse(req: NextRequest) {
                 redis.set(fid.toString(), {
                     ...userData,
                     poapCursor: end,
+                    friendsCursor: 0,
                 });
 
                 redis.expire(fid.toString(), 5 * 60); // Delete cursor after 5 minutes

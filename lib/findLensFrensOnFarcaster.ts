@@ -63,7 +63,7 @@ export default async function findLensFrensOnFarcaster(
                         )
                     )
                     .map((following: any) => {
-                        if (following.xmtp.isXMTPEnabled) {
+                        if (following.xmtp && following.xmtp.isXMTPEnabled) {
                             return {
                                 ...following.followingAddress.socials[0],
                                 isXMTPEnabled: following.xmtp.isXMTPEnabled,

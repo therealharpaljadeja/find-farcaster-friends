@@ -80,48 +80,63 @@ async function getResponse(req: NextRequest) {
 
         let userFriends = friends.slice(start, end);
 
-        let encodedObject = encodeURIComponent(JSON.stringify(userFriends));
+        if (userFriends.length) {
+            let encodedObject = encodeURIComponent(JSON.stringify(userFriends));
 
-        // Update cursor in Redis for next fetch
-        await redis.set(body.untrustedData.fid.toString(), {
-            ...userData,
-            friendsCursor: end,
-        });
-
-        // Send XMTP messages
-        for await (let friend of userFriends) {
-            if (friend.isXMTPEnabled) {
-                const conv = await xmtp.conversations.newConversation(
-                    friend.xmtpReceiver
-                );
-                conv.send(
-                    `Hey @${friend.profileHandle},\n@${username} found you using a Farcaster Frame \n\nCheck out @${username}'s profile here: https://warpcast.com/${username} \n\nCheck out the frame here: https://warpcast.com/harpaljadeja/0xc9d767b1`
-                );
-            }
-        }
-
-        let buttons = userFriends.map((res: any, index: number) => ({
-            label: `@${res.profileHandle}`,
-            action: "post",
-            target: `${BASE_URL}/api/findProfilesWithSamePoaps?eventId=${res.eventId}`,
-        }));
-
-        if (end < userData.friends.length) {
-            buttons.push({
-                label: "Next ▶️",
-                action: "post",
-                target: `${BASE_URL}/api/findProfilesWithSamePoaps?eventId=${eventId}`,
+            // Update cursor in Redis for next fetch
+            await redis.set(body.untrustedData.fid.toString(), {
+                ...userData,
+                friendsCursor: end,
             });
-        }
 
-        return new NextResponse(
-            getFrameHtml({
-                version: "vNext",
-                image: image + encodedObject,
-                buttons: buttons as FrameButtonsType,
-                postUrl: "",
-            })
-        );
+            redis.expire(body.untrustedData.fid.toString(), 5 * 60);
+
+            // Send XMTP messages
+            for await (let friend of userFriends) {
+                if (friend.isXMTPEnabled) {
+                    console.log(`Message sent to: ${friend.profileHandle}`);
+                    const conv = await xmtp.conversations.newConversation(
+                        friend.xmtpReceiver
+                    );
+                    conv.send(
+                        `Hey @${friend.profileHandle},\n@${username} found you using a Farcaster Frame \n\nCheck out @${username}'s profile here: https://warpcast.com/${username} \n\nCheck out the frame here: https://find-farcaster-friends.vercel.app`
+                    );
+                }
+            }
+
+            let buttons = userFriends.map((res: any, index: number) => ({
+                label: `@${res.profileHandle}`,
+                action: "link",
+                target: `https://warpcast.com/${res.profileHandle}`,
+            }));
+
+            if (end < userData.friends.length) {
+                buttons.push({
+                    label: "Next ▶️",
+                    action: "post",
+                    target: `${BASE_URL}/api/findProfilesWithSamePoaps?eventId=${eventId}`,
+                });
+            }
+
+            console.log(image + encodedObject);
+
+            return new NextResponse(
+                getFrameHtml({
+                    version: "vNext",
+                    image: image + encodedObject,
+                    buttons: buttons as FrameButtonsType,
+                    postUrl: "",
+                })
+            );
+        } else {
+            return new NextResponse(
+                getFrameHtml({
+                    version: "vNext",
+                    image: NO_FRIENDS_FOUND,
+                    postUrl: "",
+                })
+            );
+        }
     }
 
     return new NextResponse(
