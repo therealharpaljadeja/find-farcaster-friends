@@ -1,5 +1,6 @@
 import {
     BASE_URL,
+    ERROR_IMAGE_URL,
     NO_POAPS_FOUND,
     WALLET_NOT_CONNECTED_IMAGE_URL,
 } from "@/lib/constants";
