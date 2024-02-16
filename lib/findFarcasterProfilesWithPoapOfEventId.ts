@@ -2,8 +2,16 @@ import { fetchQueryWithPagination, init } from "@airstack/node";
 import { gql } from "@apollo/client";
 import { gqlToString } from "./findPoapsForAddress";
 
+export type Friend = {
+    eventName: string;
+    profileHandle: string;
+    profileImage: string;
+    isXMTPEnabled: boolean;
+    xmtpReceiver: string;
+};
+
 const query = gql`
-    query FindFarcasterWithPoapWithEventId($eventId: String) {
+    query FindFarcasterWithPoapWithEventId($eventId: String, $userId: String) {
         Poaps(
             input: {
                 blockchain: ALL
@@ -17,10 +25,21 @@ const query = gql`
                 }
                 owner {
                     socials(
-                        input: { filter: { dappName: { _eq: farcaster } } }
+                        input: {
+                            filter: {
+                                dappName: { _eq: farcaster }
+                                userId: { _ne: $userId }
+                            }
+                        }
                     ) {
                         profileHandle
                         profileImage
+                    }
+                    xmtp {
+                        isXMTPEnabled
+                        owner {
+                            identity
+                        }
                     }
                 }
             }
@@ -28,9 +47,13 @@ const query = gql`
     }
 `;
 
-export default async function findFarcasterWithPoapOfEventId(eventId: string) {
+export default async function findFarcasterWithPoapOfEventId(
+    eventId: string,
+    fid: number
+) {
     let response = await fetchQueryWithPagination(gqlToString(query), {
         eventId,
+        userId: fid.toString(), // fid to filter out
     });
 
     if (response) {
@@ -41,14 +64,25 @@ export default async function findFarcasterWithPoapOfEventId(eventId: string) {
         let farcasterProfilesThatOwnPoapWithEventId = Poap.map((poap: any) => {
             let { owner, poapEvent } = poap;
 
-            let { socials } = owner;
+            let { socials, xmtp } = owner;
 
             if (socials) {
                 let { profileHandle, profileImage } = socials[0];
+
+                let isXMTPEnabled = false;
+                let xmtpReceiver;
+
+                if (xmtp) {
+                    isXMTPEnabled = xmtp[0].isXMTPEnabled;
+                    xmtpReceiver = xmtp[0].owner.identity;
+                }
+
                 return {
                     eventName: poapEvent.eventName,
                     profileHandle,
                     profileImage,
+                    isXMTPEnabled,
+                    xmtpReceiver,
                 };
             }
 
@@ -57,8 +91,7 @@ export default async function findFarcasterWithPoapOfEventId(eventId: string) {
 
         let result = farcasterProfilesThatOwnPoapWithEventId.filter(Boolean);
 
-        // I have to filter the null results from Airstack so I can't put a limit of 3 on the Airstack result but instead had to put a manual limit here.
-        return [result[0], result[1], result[2]];
+        return result;
     }
     return [];
 }

@@ -1,10 +1,10 @@
 import {
     BASE_URL,
-    ERROR_IMAGE_URL,
     NO_POAPS_FOUND,
     WALLET_NOT_CONNECTED_IMAGE_URL,
 } from "@/lib/constants";
 import findPoapsForAddress from "@/lib/findPoapsForAddress";
+import { UserData, pickRandomElements } from "@/lib/utils";
 import { Redis } from "@upstash/redis";
 import {
     FrameActionPayload,
@@ -18,12 +18,6 @@ const redis = new Redis({
     url: process.env.REDIS_URL as string,
     token: process.env.REDIS_TOKEN as string,
 });
-
-// Function to pick random elements from the array
-function pickRandomElements(array: any[], count: number) {
-    const shuffled = array.sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
-}
 
 async function getResponse(req: NextRequest) {
     let accountAddress: string | undefined;
@@ -68,23 +62,14 @@ async function getResponse(req: NextRequest) {
 
         let fid = body.untrustedData.fid;
 
-        let userData = (await redis.get(fid.toString())) as {
-            userOwnedPoaps: {
-                eventName: string;
-                eventId: string;
-                image_url: string;
-            }[];
-        };
+        let userData = (await redis.get(fid.toString())) as UserData;
 
-        let result;
-
-        if (userData && userData.userOwnedPoaps) {
-            result = pickRandomElements(userData.userOwnedPoaps, 3);
-        } else {
-            userData = { userOwnedPoaps: [] };
+        if (!userData) {
+            userData = { userOwnedPoaps: [], poapFriends: [] };
             userData.userOwnedPoaps = await findPoapsForAddress(accountAddress);
-            result = pickRandomElements(userData.userOwnedPoaps, 3);
         }
+
+        let result = pickRandomElements(userData.userOwnedPoaps, 3);
 
         if (result) {
             if (result && result.length > 0) {
@@ -96,14 +81,13 @@ async function getResponse(req: NextRequest) {
                     JSON.stringify(poapImageUrls)
                 );
 
-                console.log(result);
                 let poapEventIds = result.map((poap: any) => poap.eventId);
 
                 let encodedPoapEventIds = encodeURIComponent(
                     JSON.stringify(poapEventIds)
                 );
 
-                redis.set(fid.toString(), { userData });
+                redis.set(fid.toString(), { ...userData, poapFriends: [] });
                 redis.expire(fid.toString(), 5 * 60); // Delete cursor after 5 minutes
 
                 return new NextResponse(
@@ -114,7 +98,9 @@ async function getResponse(req: NextRequest) {
                             ...result.map((res: any, index: number) => ({
                                 label: index + 1,
                                 action: "post",
-                                target: `${BASE_URL}/api/findProfilesWithSamePoaps?eventId=${res.eventId}`,
+                                target:
+                                    `${BASE_URL}/api/findProfilesWithSamePoaps?eventIds=` +
+                                    encodedPoapEventIds,
                             })),
                         ] as FrameButtonsType,
                         postUrl:
