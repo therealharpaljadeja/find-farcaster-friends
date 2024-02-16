@@ -65,7 +65,14 @@ async function getResponse(req: NextRequest) {
         let userData = (await redis.get(fid.toString())) as UserData;
 
         if (!userData) {
-            userData = { userOwnedPoaps: [], poapFriends: [] };
+            userData = {
+                userOwnedPoaps: [],
+                poapFriends: [],
+                farcasterProfilesFromLens: [],
+            };
+        }
+
+        if (!userData.userOwnedPoaps || !userData.userOwnedPoaps.length) {
             userData.userOwnedPoaps = await findPoapsForAddress(accountAddress);
         }
 

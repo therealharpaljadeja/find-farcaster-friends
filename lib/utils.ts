@@ -13,4 +13,5 @@ export type UserData = {
         image_url: string;
     }[];
     poapFriends: Friend[];
+    farcasterProfilesFromLens: Friend[];
 };
