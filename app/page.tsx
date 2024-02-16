@@ -41,6 +41,7 @@ export default async function Home({
                 <FrameImage src={`${BASE_URL}/base.png`} />
                 <FrameButton>Using Poaps</FrameButton>
                 <FrameButton>Using Lens</FrameButton>
+                <FrameButton>ETHDenver</FrameButton>
             </FrameContainer>
         </div>
     );

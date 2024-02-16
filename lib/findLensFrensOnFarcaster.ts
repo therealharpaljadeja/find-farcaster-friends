@@ -57,8 +57,6 @@ export default async function findLensFrensOnFarcaster(
             if (SocialFollowings) {
                 let { Following } = SocialFollowings;
 
-                console.log(Following);
-
                 let result = Following.filter(
                     (following: any) =>
                         following.followingAddress.socials !== null
