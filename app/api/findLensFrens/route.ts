@@ -2,7 +2,7 @@ import { BASE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
 import findLensFrensOnFarcaster from "@/lib/findLensFrensOnFarcaster";
 import { UserData, pickRandomElements } from "@/lib/utils";
 import { Redis } from "@upstash/redis";
-import { Client } from "@xmtp/xmtp-js";
+// import { Client } from "@xmtp/xmtp-js";
 import { ethers } from "ethers";
 import {
     FrameActionPayload,
@@ -20,9 +20,9 @@ const redis = new Redis({
 let wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string);
 
 async function getResponse(req: NextRequest) {
-    const xmtp = await Client.create(wallet, {
-        env: "production",
-    });
+    // const xmtp = await Client.create(wallet, {
+    //     env: "production",
+    // });
 
     const body: FrameActionPayload = await req.json();
 
