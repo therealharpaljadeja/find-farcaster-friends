@@ -38,7 +38,7 @@ export default async function Home({
                 state={null}
                 previousFrame={previousFrame}
             >
-                <FrameImage src={`${BASE_URL}/base.png`} />
+                <FrameImage src={`${BASE_URL}/base.gif`} />
                 <FrameButton>Using Poaps</FrameButton>
                 <FrameButton>Using Lens</FrameButton>
                 <FrameButton>ETHDenver</FrameButton>
