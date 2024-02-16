@@ -11,6 +11,7 @@ import {
     FrameButtonsType,
     getAddressForFid,
     getFrameHtml,
+    validateFrameMessage,
 } from "frames.js";
 import { NextRequest, NextResponse } from "next/server";
 
