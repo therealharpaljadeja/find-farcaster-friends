@@ -48,7 +48,7 @@ export const generateFriendsImage = async (friends: Friend[]) => {
                         justifyContent: "space-between",
                     }}
                 >
-                    {/* {friends.map((friend, index) => (
+                    {friends.map((friend, index) => (
                         <div
                             key={index}
                             style={{
@@ -70,7 +70,7 @@ export const generateFriendsImage = async (friends: Friend[]) => {
                                 @{friend.profileHandle}
                             </p>
                         </div>
-                    ))} */}
+                    ))}
                 </div>
                 <p
                     style={{

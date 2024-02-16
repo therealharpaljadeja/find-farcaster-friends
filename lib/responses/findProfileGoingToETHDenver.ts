@@ -1,32 +1,24 @@
-import { BASE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
-import findFarcasterProfilesGoingToETHDenver from "@/lib/findFarcasterProfilesGoingToETHDenver";
-import { Friend } from "@/lib/findFarcasterProfilesWithPoapOfEventId";
-import { pickRandomElements } from "@/lib/utils";
 import { Redis } from "@upstash/redis";
-// import { Client } from "@xmtp/xmtp-js";
-import { ethers } from "ethers";
 import {
     FrameActionPayload,
     FrameButtonsType,
     getFrameHtml,
     getUserDataForFid,
 } from "frames.js";
-import { NextRequest, NextResponse } from "next/server";
+import { Friend } from "../findFarcasterProfilesWithPoapOfEventId";
+import { pickRandomElements } from "../utils";
+import findFarcasterProfilesGoingToETHDenver from "../findFarcasterProfilesGoingToETHDenver";
+import { BASE_URL, NO_FRIENDS_FOUND } from "../constants";
+import { NextResponse } from "next/server";
 
 const redis = new Redis({
     url: process.env.REDIS_URL as string,
     token: process.env.REDIS_TOKEN as string,
 });
 
-let wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string);
-
-async function getResponse(req: NextRequest) {
-    // const xmtp = await Client.create(wallet, {
-    //     env: "production",
-    // });
-
-    const body: FrameActionPayload = await req.json();
-
+export default async function findFarcasterProfilesGoingToETHDenverRes(
+    body: FrameActionPayload
+) {
     const fid = body.untrustedData.fid;
 
     const profileDetail = await getUserDataForFid({
@@ -108,8 +100,4 @@ async function getResponse(req: NextRequest) {
             postUrl: "",
         })
     );
-}
-
-export async function POST(req: NextRequest): Promise<Response> {
-    return getResponse(req);
 }

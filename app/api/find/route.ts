@@ -1,4 +1,7 @@
 import { BASE_URL, ERROR_IMAGE_URL } from "@/lib/constants";
+import findLensFrens from "@/lib/responses/findLensFrens";
+import findFarcasterProfilesGoingToETHDenverRes from "@/lib/responses/findProfileGoingToETHDenver";
+import findUserPoaps from "@/lib/responses/findUserPoaps";
 import { getFrameHtml } from "frames.js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -7,20 +10,11 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     switch (body.untrustedData.buttonIndex) {
         case 1:
-            return await fetch(`${BASE_URL}/api/findUserPoaps`, {
-                method: "POST",
-                body: JSON.stringify(body),
-            });
+            return await findUserPoaps(body);
         case 2:
-            return await fetch(`${BASE_URL}/api/findLensFrens`, {
-                method: "POST",
-                body: JSON.stringify(body),
-            });
-        // case 3:
-        //     return await fetch(
-        //         `${BASE_URL}/api/findFarcasterProfilesGoingToETHDenver`,
-        //         { method: "POST", body: JSON.stringify(body) }
-        //     );
+            return await findLensFrens(body);
+        case 3:
+            return await findFarcasterProfilesGoingToETHDenverRes(body);
         default:
             return new NextResponse(
                 getFrameHtml({

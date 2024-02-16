@@ -43,7 +43,7 @@ export const generatePoapsImage = async (poaps: string[]) => {
                         justifyContent: "space-between",
                     }}
                 >
-                    {/* {poaps.map((poap, index) => (
+                    {poaps.map((poap, index) => (
                         <img
                             src={poap}
                             key={index}
@@ -53,7 +53,7 @@ export const generatePoapsImage = async (poaps: string[]) => {
                                 borderRadius: "100%",
                             }}
                         />
-                    ))} */}
+                    ))}
                 </div>
                 <p
                     style={{

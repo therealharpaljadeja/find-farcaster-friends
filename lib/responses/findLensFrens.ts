@@ -1,32 +1,21 @@
-import { BASE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
-import findFarcasterProfilesGoingToETHDenver from "@/lib/findFarcasterProfilesGoingToETHDenver";
-import { Friend } from "@/lib/findFarcasterProfilesWithPoapOfEventId";
-import { pickRandomElements } from "@/lib/utils";
 import { Redis } from "@upstash/redis";
-// import { Client } from "@xmtp/xmtp-js";
-import { ethers } from "ethers";
 import {
     FrameActionPayload,
     FrameButtonsType,
     getFrameHtml,
     getUserDataForFid,
 } from "frames.js";
-import { NextRequest, NextResponse } from "next/server";
+import findLensFrensOnFarcaster from "../findLensFrensOnFarcaster";
+import { UserData, pickRandomElements } from "../utils";
+import { BASE_URL, NO_FRIENDS_FOUND } from "../constants";
+import { NextResponse } from "next/server";
 
 const redis = new Redis({
     url: process.env.REDIS_URL as string,
     token: process.env.REDIS_TOKEN as string,
 });
 
-let wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string);
-
-async function getResponse(req: NextRequest) {
-    // const xmtp = await Client.create(wallet, {
-    //     env: "production",
-    // });
-
-    const body: FrameActionPayload = await req.json();
-
+export default async function findLensFrens(body: FrameActionPayload) {
     const fid = body.untrustedData.fid;
 
     const profileDetail = await getUserDataForFid({
@@ -39,41 +28,40 @@ async function getResponse(req: NextRequest) {
         username = profileDetail.username;
     }
 
-    let userData = (await redis.get("farcasterProfilesGoingToETHDenver")) as {
-        farcasterProfilesGoingToETHDenver: Friend[];
-    };
+    let userData = (await redis.get(fid.toString())) as UserData;
 
     if (!userData) {
         userData = {
-            farcasterProfilesGoingToETHDenver: [],
+            poapFriends: [],
+            userOwnedPoaps: [],
+            farcasterProfilesFromLens: [],
         };
     }
 
     if (
-        !userData.farcasterProfilesGoingToETHDenver ||
-        !userData.farcasterProfilesGoingToETHDenver.length
+        !userData.farcasterProfilesFromLens ||
+        !userData.farcasterProfilesFromLens.length
     ) {
-        userData.farcasterProfilesGoingToETHDenver =
-            await findFarcasterProfilesGoingToETHDenver();
-        redis.set("farcasterProfilesGoingToETHDenver", userData);
+        userData.farcasterProfilesFromLens = await findLensFrensOnFarcaster(
+            fid
+        );
+        redis.set(fid.toString(), userData);
+        redis.expire(fid.toString(), 5 * 60); // Delete cursor after 5 minutes
     }
 
-    let farcasterProfilesGoingToETHDenver = pickRandomElements(
-        userData.farcasterProfilesGoingToETHDenver,
+    let farcasterProfilesFromLens = pickRandomElements(
+        userData.farcasterProfilesFromLens,
         3
     );
 
-    if (
-        farcasterProfilesGoingToETHDenver &&
-        farcasterProfilesGoingToETHDenver.length
-    ) {
+    if (farcasterProfilesFromLens && farcasterProfilesFromLens.length) {
         let image = `${BASE_URL}/api/friendsImage?friends=`;
 
         let encodedObject = encodeURIComponent(
-            JSON.stringify(farcasterProfilesGoingToETHDenver)
+            JSON.stringify(farcasterProfilesFromLens)
         );
 
-        let buttons = farcasterProfilesGoingToETHDenver.map((profile: any) => ({
+        let buttons = farcasterProfilesFromLens.map((profile: any) => ({
             action: "link",
             label: `@${profile.profileHandle}`,
             target: `https://warpcast.com/${profile.profileHandle}`,
@@ -108,8 +96,4 @@ async function getResponse(req: NextRequest) {
             postUrl: "",
         })
     );
-}
-
-export async function POST(req: NextRequest): Promise<Response> {
-    return getResponse(req);
 }
