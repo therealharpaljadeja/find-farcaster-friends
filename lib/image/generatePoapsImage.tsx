@@ -48,8 +48,8 @@ export const generatePoapsImage = async (poaps: string[]) => {
                             src={poap}
                             key={index}
                             style={{
-                                width: "300px",
-                                height: "300px",
+                                width: "220px",
+                                height: "220px",
                                 borderRadius: "100%",
                             }}
                         />
