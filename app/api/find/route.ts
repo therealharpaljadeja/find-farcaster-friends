@@ -16,11 +16,11 @@ export async function POST(req: NextRequest): Promise<Response> {
                 method: "POST",
                 body: JSON.stringify(body),
             });
-        case 3:
-            return await fetch(
-                `${BASE_URL}/api/findFarcasterProfilesGoingToETHDenver`,
-                { method: "POST", body: JSON.stringify(body) }
-            );
+        // case 3:
+        //     return await fetch(
+        //         `${BASE_URL}/api/findFarcasterProfilesGoingToETHDenver`,
+        //         { method: "POST", body: JSON.stringify(body) }
+        //     );
         default:
             return new NextResponse(
                 getFrameHtml({
