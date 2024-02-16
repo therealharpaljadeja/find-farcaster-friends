@@ -1,17 +1,16 @@
 import {
     BASE_URL,
-    ERROR_IMAGE_URL,
     NO_POAPS_FOUND,
     WALLET_NOT_CONNECTED_IMAGE_URL,
 } from "@/lib/constants";
 import findPoapsForAddress from "@/lib/findPoapsForAddress";
+import { UserData, pickRandomElements } from "@/lib/utils";
 import { Redis } from "@upstash/redis";
 import {
     FrameActionPayload,
     FrameButtonsType,
     getAddressForFid,
     getFrameHtml,
-    validateFrameMessage,
 } from "frames.js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -63,63 +62,53 @@ async function getResponse(req: NextRequest) {
 
         let fid = body.untrustedData.fid;
 
-        let userData = (await redis.get(fid.toString())) as { cursor: string };
+        let userData = (await redis.get(fid.toString())) as UserData;
 
-        let cursor;
-
-        if (userData) {
-            cursor = userData.cursor;
+        if (!userData) {
+            userData = {
+                userOwnedPoaps: [],
+                poapFriends: [],
+                farcasterProfilesFromLens: [],
+            };
         }
 
-        let result = await findPoapsForAddress(accountAddress, cursor ?? "");
+        if (!userData.userOwnedPoaps || !userData.userOwnedPoaps.length) {
+            userData.userOwnedPoaps = await findPoapsForAddress(accountAddress);
+        }
+
+        let result = pickRandomElements(userData.userOwnedPoaps, 3);
 
         if (result) {
-            let { userOwnedPoaps, nextCursor } = result;
-
-            if (userOwnedPoaps && userOwnedPoaps.length > 0) {
+            if (result && result.length > 0) {
                 let image = `${BASE_URL}/api/poapsImage?poaps=`;
 
-                let poapImageUrls = userOwnedPoaps.map(
-                    (poap: any) => poap.image_url
-                );
+                let poapImageUrls = result.map((poap: any) => poap.image_url);
 
                 let encodedPoapImageUrls = encodeURIComponent(
                     JSON.stringify(poapImageUrls)
                 );
 
-                console.log(userOwnedPoaps);
-                let poapEventIds = userOwnedPoaps.map(
-                    (poap: any) => poap.eventId
-                );
+                let poapEventIds = result.map((poap: any) => poap.eventId);
 
                 let encodedPoapEventIds = encodeURIComponent(
                     JSON.stringify(poapEventIds)
                 );
 
-                redis.set(fid.toString(), { cursor: nextCursor });
+                redis.set(fid.toString(), { ...userData, poapFriends: [] });
                 redis.expire(fid.toString(), 5 * 60); // Delete cursor after 5 minutes
-
-                console.log(nextCursor);
 
                 return new NextResponse(
                     getFrameHtml({
                         version: "vNext",
                         image: image + encodedPoapImageUrls,
                         buttons: [
-                            ...userOwnedPoaps.map(
-                                (res: any, index: number) => ({
-                                    label: index + 1,
-                                    action: "post",
-                                    target: `${BASE_URL}/api/findProfilesWithSamePoaps?eventId=${res.eventId}`,
-                                })
-                            ),
-                            nextCursor
-                                ? {
-                                      label: "Next ▶️",
-                                      action: "post",
-                                      target: `${BASE_URL}/api/findUserPoaps`,
-                                  }
-                                : null,
+                            ...result.map((res: any, index: number) => ({
+                                label: index + 1,
+                                action: "post",
+                                target:
+                                    `${BASE_URL}/api/findProfilesWithSamePoaps?eventIds=` +
+                                    encodedPoapEventIds,
+                            })),
                         ] as FrameButtonsType,
                         postUrl:
                             `${BASE_URL}/api/findProfilesWithSamePoaps?eventIds=` +

@@ -1,28 +1,34 @@
 import { BASE_URL, ERROR_IMAGE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
-import findFarcasterWithPoapOfEventId from "@/lib/findFarcasterProfilesWithPoapOfEventId";
-import {
-    FrameButtonsType,
-    getFrameHtml,
-    getFrameMessage,
-    validateFrameMessage,
-} from "frames.js";
+import findFarcasterWithPoapOfEventId, {
+    Friend,
+} from "@/lib/findFarcasterProfilesWithPoapOfEventId";
+import { pickRandomElements } from "@/lib/utils";
+import { Redis } from "@upstash/redis";
+import { FrameButtonsType, getFrameHtml, getFrameMessage } from "frames.js";
 import { NextRequest, NextResponse } from "next/server";
+
+const redis = new Redis({
+    url: process.env.REDIS_URL as string,
+    token: process.env.REDIS_TOKEN as string,
+});
 
 async function getResponse(req: NextRequest) {
     const body = await req.json();
 
-    const isValid = await validateFrameMessage(body);
+    let fid = body.untrustedData.fid;
 
-    if (!isValid) {
-        return new NextResponse(
-            getFrameHtml({
-                version: "vNext",
-                image: ERROR_IMAGE_URL,
-                buttons: [{ label: "Try Again", action: "post" }],
-                postUrl: `${BASE_URL}/api/findUserPoaps`,
-            })
-        );
-    }
+    // const isValid = await validateFrameMessage(body);
+
+    // if (!isValid) {
+    //     return new NextResponse(
+    //         getFrameHtml({
+    //             version: "vNext",
+    //             image: ERROR_IMAGE_URL,
+    //             buttons: [{ label: "Try Again", action: "post" }],
+    //             postUrl: `${BASE_URL}/api/findUserPoaps`,
+    //         })
+    //     );
+    // }
 
     const url = new URL(req.url);
 
@@ -54,8 +60,31 @@ async function getResponse(req: NextRequest) {
         );
     }
 
-    const farcasterProfiles = await findFarcasterWithPoapOfEventId(
-        eventIds[buttonIndex - 1]
+    let userData = (await redis.get(fid.toString())) as {
+        userOwnedPoaps: {
+            eventName: string;
+            eventId: string;
+            image_url: string;
+        }[];
+        poapFriends: Friend[];
+    };
+
+    if (!userData) {
+        userData = { userOwnedPoaps: [], poapFriends: [] };
+    }
+
+    if (!userData.poapFriends || !userData.poapFriends.length) {
+        userData.poapFriends = await findFarcasterWithPoapOfEventId(
+            eventIds[buttonIndex - 1],
+            fid
+        );
+        redis.set(fid.toString(), userData);
+        redis.expire(fid.toString(), 5 * 60); // Delete cursor after 5 minutes
+    }
+
+    let farcasterProfiles: Friend[] = pickRandomElements(
+        userData.poapFriends,
+        3
     );
 
     if (farcasterProfiles && farcasterProfiles.length) {
