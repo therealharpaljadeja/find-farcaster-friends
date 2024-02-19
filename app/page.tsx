@@ -42,6 +42,7 @@ export default async function Home({
                 <FrameButton>Using Poaps</FrameButton>
                 <FrameButton>Using Lens</FrameButton>
                 <FrameButton>ETHDenver</FrameButton>
+                <FrameButton>Farcon</FrameButton>
             </FrameContainer>
         </div>
     );
