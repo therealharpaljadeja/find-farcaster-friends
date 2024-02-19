@@ -1,4 +1,5 @@
 import { BASE_URL, ERROR_IMAGE_URL } from "@/lib/constants";
+import findFarcasterProfilesGoingToFarconRes from "@/lib/responses/findFarcasterProfilesGoingToFarcon";
 import findLensFrens from "@/lib/responses/findLensFrens";
 import findFarcasterProfilesGoingToETHDenverRes from "@/lib/responses/findProfileGoingToETHDenver";
 import findUserPoaps from "@/lib/responses/findUserPoaps";
@@ -15,6 +16,8 @@ export async function POST(req: NextRequest): Promise<Response> {
             return await findLensFrens(body);
         case 3:
             return await findFarcasterProfilesGoingToETHDenverRes(body);
+        case 4:
+            return await findFarcasterProfilesGoingToFarconRes(body);
         default:
             return new NextResponse(
                 getFrameHtml({
