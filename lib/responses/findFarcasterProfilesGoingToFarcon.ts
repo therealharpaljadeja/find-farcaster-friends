@@ -73,7 +73,6 @@ export default async function findFarcasterProfilesGoingToFarconRes(
         let rerollButton = {
             action: "post_url",
             label: "Reroll 🔄",
-            target: `${BASE_URL}/api/findFarcasterProfilesGoingToFarcon`,
         };
 
         // Send XMTP messages
@@ -93,7 +92,7 @@ export default async function findFarcasterProfilesGoingToFarconRes(
                 version: "vNext",
                 image: image + encodedObject,
                 buttons: [...buttons, rerollButton] as FrameButtonsType,
-                postUrl: "",
+                postUrl: `${BASE_URL}/api/findFarcasterProfilesGoingToFarcon`,
             })
         );
     }

@@ -70,7 +70,6 @@ export default async function findLensFrens(body: FrameActionPayload) {
         let rerollButton = {
             action: "post_url",
             label: "Reroll 🔄",
-            target: `${BASE_URL}/api/findLensFrens`,
         };
 
         // Send XMTP messages
@@ -90,7 +89,7 @@ export default async function findLensFrens(body: FrameActionPayload) {
                 version: "vNext",
                 image: image + encodedObject,
                 buttons: [...buttons, rerollButton] as FrameButtonsType,
-                postUrl: "",
+                postUrl: `${BASE_URL}/api/findLensFrens`,
             })
         );
     }
