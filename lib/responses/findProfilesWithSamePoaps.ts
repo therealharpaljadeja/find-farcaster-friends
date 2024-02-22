@@ -104,7 +104,7 @@ export default async function findProfileWithSamePoaps(
                 version: "vNext",
                 image: image + encodedObject,
                 buttons: [...buttons, rerollButton] as FrameButtonsType,
-                postUrl: "",
+                postUrl: urlFromReq,
             })
         );
     }

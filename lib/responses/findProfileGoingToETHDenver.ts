@@ -74,7 +74,6 @@ export default async function findFarcasterProfilesGoingToETHDenverRes(
         let rerollButton = {
             action: "post",
             label: "Reroll 🔄",
-            target: `${BASE_URL}/api/findFarcasterProfilesGoingToETHDenver`,
         };
 
         // Send XMTP messages
@@ -94,7 +93,7 @@ export default async function findFarcasterProfilesGoingToETHDenverRes(
                 version: "vNext",
                 image: image + encodedObject,
                 buttons: [...buttons, rerollButton] as FrameButtonsType,
-                postUrl: "",
+                postUrl: `${BASE_URL}/api/findFarcasterProfilesGoingToETHDenver`,
             })
         );
     }
