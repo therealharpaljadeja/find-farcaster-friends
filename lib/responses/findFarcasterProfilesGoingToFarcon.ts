@@ -70,6 +70,12 @@ export default async function findFarcasterProfilesGoingToFarconRes(
             target: `https://warpcast.com/${profile.profileHandle}`,
         }));
 
+        let rerollButton = {
+            action: "post_url",
+            label: "Reroll 🔄",
+            target: `${BASE_URL}/api/findFarcasterProfilesGoingToFarcon`,
+        };
+
         // Send XMTP messages
         // for await (let friend of farcasterProfilesFromLens) {
         //     if (friend.isXMTPEnabled) {
@@ -86,7 +92,7 @@ export default async function findFarcasterProfilesGoingToFarconRes(
             getFrameHtml({
                 version: "vNext",
                 image: image + encodedObject,
-                buttons: buttons as FrameButtonsType,
+                buttons: [...buttons, rerollButton] as FrameButtonsType,
                 postUrl: "",
             })
         );

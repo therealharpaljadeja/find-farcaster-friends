@@ -67,6 +67,12 @@ export default async function findLensFrens(body: FrameActionPayload) {
             target: `https://warpcast.com/${profile.profileHandle}`,
         }));
 
+        let rerollButton = {
+            action: "post_url",
+            label: "Reroll 🔄",
+            target: `${BASE_URL}/api/findLensFrens`,
+        };
+
         // Send XMTP messages
         // for await (let friend of farcasterProfilesFromLens) {
         //     if (friend.isXMTPEnabled) {
@@ -83,7 +89,7 @@ export default async function findLensFrens(body: FrameActionPayload) {
             getFrameHtml({
                 version: "vNext",
                 image: image + encodedObject,
-                buttons: buttons as FrameButtonsType,
+                buttons: [...buttons, rerollButton] as FrameButtonsType,
                 postUrl: "",
             })
         );

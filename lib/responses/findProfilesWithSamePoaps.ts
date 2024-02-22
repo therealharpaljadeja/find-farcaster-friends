@@ -42,7 +42,7 @@ export default async function findProfileWithSamePoaps(
 
     const { buttonIndex } = await getFrameMessage(body);
 
-    if (buttonIndex > 3) {
+    if (buttonIndex > 4) {
         return new NextResponse(
             getFrameHtml({
                 version: "vNext",
@@ -87,15 +87,23 @@ export default async function findProfileWithSamePoaps(
             JSON.stringify(farcasterProfiles)
         );
 
+        let buttons = farcasterProfiles.map((profile: any) => ({
+            action: "link",
+            label: `@${profile.profileHandle}`,
+            target: `https://warpcast.com/${profile.profileHandle}`,
+        }));
+
+        let rerollButton = {
+            action: "post",
+            label: "Reroll 🔄",
+            target: urlFromReq,
+        };
+
         return new NextResponse(
             getFrameHtml({
                 version: "vNext",
                 image: image + encodedObject,
-                buttons: farcasterProfiles.map((profile: any) => ({
-                    action: "link",
-                    label: `@${profile.profileHandle}`,
-                    target: `https://warpcast.com/${profile.profileHandle}`,
-                })) as FrameButtonsType,
+                buttons: [...buttons, rerollButton] as FrameButtonsType,
                 postUrl: "",
             })
         );

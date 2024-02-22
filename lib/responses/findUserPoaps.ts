@@ -3,11 +3,9 @@ import {
     FrameButtonsType,
     getAddressForFid,
     getFrameHtml,
-    validateFrameMessage,
 } from "frames.js";
 import {
     BASE_URL,
-    ERROR_IMAGE_URL,
     NO_POAPS_FOUND,
     WALLET_NOT_CONNECTED_IMAGE_URL,
 } from "../constants";
@@ -23,12 +21,21 @@ const redis = new Redis({
 
 export default async function findUserPoaps(body: FrameActionPayload) {
     let accountAddress: string | undefined;
-
     try {
         accountAddress = await getAddressForFid({
             fid: body.untrustedData.fid,
-            options: { fallbackToCustodyAddress: true },
+            options: {
+                fallbackToCustodyAddress: true,
+                hubHttpUrl: process.env.HUB_URL,
+                hubRequestOptions: {
+                    headers: {
+                        api_key: process.env.HUB_KEY as string,
+                    },
+                },
+            },
         });
+
+        console.log(accountAddress);
 
         if (!accountAddress) {
             return new NextResponse(
