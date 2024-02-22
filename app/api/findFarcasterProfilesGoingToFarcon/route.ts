@@ -1,17 +1,9 @@
-import { BASE_URL, NO_FRIENDS_FOUND } from "@/lib/constants";
-import findFarcasterProfilesGoingToFarcon from "@/lib/findFarcasterProfilesGoingToFarcon";
-import { Friend } from "@/lib/findFarcasterProfilesWithPoapOfEventId";
-import { pickRandomElements } from "@/lib/utils";
+import findFarcasterProfilesGoingToFarconRes from "@/lib/responses/findFarcasterProfilesGoingToFarcon";
 import { Redis } from "@upstash/redis";
 // import { Client } from "@xmtp/xmtp-js";
 import { ethers } from "ethers";
-import {
-    FrameActionPayload,
-    FrameButtonsType,
-    getFrameHtml,
-    getUserDataForFid,
-} from "frames.js";
-import { NextRequest, NextResponse } from "next/server";
+import { FrameActionPayload } from "frames.js";
+import { NextRequest } from "next/server";
 
 const redis = new Redis({
     url: process.env.REDIS_URL as string,
@@ -25,89 +17,9 @@ async function getResponse(req: NextRequest) {
     //     env: "production",
     // });
 
-    const body: FrameActionPayload = await req.json();
+    let body: FrameActionPayload = await req.json();
 
-    const fid = body.untrustedData.fid;
-
-    const profileDetail = await getUserDataForFid({
-        fid,
-    });
-
-    let username;
-
-    if (profileDetail) {
-        username = profileDetail.username;
-    }
-
-    let userData = (await redis.get("farcasterProfilesGoingToFarcon")) as {
-        farcasterProfilesGoingToFarcon: Friend[];
-    };
-
-    if (!userData) {
-        userData = {
-            farcasterProfilesGoingToFarcon: [],
-        };
-    }
-
-    if (
-        !userData.farcasterProfilesGoingToFarcon ||
-        !userData.farcasterProfilesGoingToFarcon.length
-    ) {
-        userData.farcasterProfilesGoingToFarcon =
-            await findFarcasterProfilesGoingToFarcon();
-        redis.set("farcasterProfilesGoingToFarcon", userData);
-    }
-
-    let farcasterProfilesGoingToFarcon = pickRandomElements(
-        userData.farcasterProfilesGoingToFarcon,
-        3
-    );
-
-    if (
-        farcasterProfilesGoingToFarcon &&
-        farcasterProfilesGoingToFarcon.length
-    ) {
-        let image = `${BASE_URL}/api/friendsImage?friends=`;
-
-        let encodedObject = encodeURIComponent(
-            JSON.stringify(farcasterProfilesGoingToFarcon)
-        );
-
-        let buttons = farcasterProfilesGoingToFarcon.map((profile: any) => ({
-            action: "link",
-            label: `@${profile.profileHandle}`,
-            target: `https://warpcast.com/${profile.profileHandle}`,
-        }));
-
-        // Send XMTP messages
-        // for await (let friend of farcasterProfilesFromLens) {
-        //     if (friend.isXMTPEnabled) {
-        //         const conv = await xmtp.conversations.newConversation(
-        //             friend.xmtpReceiver
-        //         );
-        //         conv.send(
-        //             `@${username} found you using a Farcaster Frame \n\nCheck out @${username}'s profile here: https://warpcast.com/${username} \n\nCheck out the frame here: https://warpcast.com/harpaljadeja/0xc9d767b1`
-        //         );
-        //     }
-        // }
-
-        return new NextResponse(
-            getFrameHtml({
-                version: "vNext",
-                image: image + encodedObject,
-                buttons: buttons as FrameButtonsType,
-                postUrl: "",
-            })
-        );
-    }
-
-    return new NextResponse(
-        getFrameHtml({
-            version: "vNext",
-            image: NO_FRIENDS_FOUND,
-            postUrl: "",
-        })
-    );
+    return await findFarcasterProfilesGoingToFarconRes(body);
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
