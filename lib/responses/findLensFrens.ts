@@ -68,7 +68,7 @@ export default async function findLensFrens(body: FrameActionPayload) {
         }));
 
         let rerollButton = {
-            action: "post_url",
+            action: "post",
             label: "Reroll 🔄",
         };
 

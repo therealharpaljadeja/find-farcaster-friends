@@ -71,7 +71,7 @@ export default async function findFarcasterProfilesGoingToFarconRes(
         }));
 
         let rerollButton = {
-            action: "post_url",
+            action: "post",
             label: "Reroll 🔄",
         };
 
