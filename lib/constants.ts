@@ -1,6 +1,6 @@
 export const BASE_URL =
     process.env.NODE_ENV === "production"
-        ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+        ? `https://find-farcaster-friends.vercel.app`
         : `http://localhost:3000`;
 
 export const ERROR_IMAGE_URL = `${BASE_URL}/error.png`;
