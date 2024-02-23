@@ -33,18 +33,16 @@ export default async function Home({
         <div className="p-4">
             Find Farcaster Friends using Poaps
             <FrameContainer
-                pathname={`${BASE_URL}/api/findUserPoaps`}
+                pathname={`${BASE_URL}/api/find`}
+                postUrl={`${BASE_URL}/api/find`}
                 state={null}
-                postUrl=""
                 previousFrame={previousFrame}
             >
-                <FrameImage src={`${BASE_URL}/base.png`} />
-                <FrameButton target={`${BASE_URL}/api/findUserPoaps`}>
-                    Find My Poaps
-                </FrameButton>
-                <FrameButton target={`${BASE_URL}/api/findLensFrens`}>
-                    Find My Lens Frens
-                </FrameButton>
+                <FrameImage src={`${BASE_URL}/base.gif`} />
+                <FrameButton>Using Poaps</FrameButton>
+                <FrameButton>Using Lens</FrameButton>
+                <FrameButton>ETHDenver</FrameButton>
+                <FrameButton>Farcon</FrameButton>
             </FrameContainer>
         </div>
     );

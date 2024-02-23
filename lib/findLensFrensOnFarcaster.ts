@@ -5,7 +5,7 @@ import { Friend } from "./findFarcasterProfilesWithPoapOfEventId";
 init(process.env.AIRSTACK_API_KEY || "");
 
 const query = gql`
-    query FindLensFrensOnFarcaster($identity: Identity!) {
+    query FindLensFrensOnFarcaster($identity: Identity!, $userId: String) {
         SocialFollowings(
             input: {
                 filter: {
@@ -19,7 +19,12 @@ const query = gql`
             Following {
                 followingAddress {
                     socials(
-                        input: { filter: { dappName: { _eq: farcaster } } }
+                        input: {
+                            filter: {
+                                dappName: { _eq: farcaster }
+                                userId: { _ne: $userId }
+                            }
+                        }
                     ) {
                         profileHandle
                         profileImage
@@ -37,11 +42,12 @@ const query = gql`
 `;
 
 export default async function findLensFrensOnFarcaster(
-    identity: string
+    fid: number
 ): Promise<Friend[] | []> {
     try {
         let response = await fetchQueryWithPagination(gqlToString(query), {
-            identity,
+            identity: `fc_fid:${fid}`,
+            userId: fid.toString(),
         });
 
         if (response) {
@@ -50,8 +56,6 @@ export default async function findLensFrensOnFarcaster(
 
             if (SocialFollowings) {
                 let { Following } = SocialFollowings;
-
-                console.log(Following);
 
                 let result = Following.filter(
                     (following: any) =>

@@ -60,8 +60,8 @@ export const generateFriendsImage = async (friends: Friend[]) => {
                             <img
                                 src={friend.profileImage}
                                 style={{
-                                    width: "300px",
-                                    height: "300px",
+                                    width: "200px",
+                                    height: "200px",
                                     borderRadius: "100%",
                                     marginBottom: "20px",
                                 }}

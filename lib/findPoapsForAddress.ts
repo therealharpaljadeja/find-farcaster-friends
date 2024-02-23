@@ -59,13 +59,13 @@ export default async function findPoapsForAddress(identity: string) {
                     return { eventName, eventId, image_url };
                 });
 
-                return userOwnedPoaps;
+                return userOwnedPoaps.length ? userOwnedPoaps : [];
             }
         }
     } catch (e) {
         console.error(e);
     }
-    return null;
+    return [];
 }
 
 export const gqlToString = (gqlQuery: DocumentNode): string =>

@@ -11,7 +11,7 @@ export type Friend = {
 };
 
 const query = gql`
-    query FindFarcasterWithPoapWithEventId($eventId: String) {
+    query FindFarcasterWithPoapWithEventId($eventId: String, $userId: String) {
         Poaps(
             input: {
                 blockchain: ALL
@@ -25,7 +25,12 @@ const query = gql`
                 }
                 owner {
                     socials(
-                        input: { filter: { dappName: { _eq: farcaster } } }
+                        input: {
+                            filter: {
+                                dappName: { _eq: farcaster }
+                                userId: { _ne: $userId }
+                            }
+                        }
                     ) {
                         profileHandle
                         profileImage
@@ -43,10 +48,12 @@ const query = gql`
 `;
 
 export default async function findFarcasterWithPoapOfEventId(
-    eventId: string
-): Promise<Friend[] | []> {
+    eventId: string,
+    fid: number
+) {
     let response = await fetchQueryWithPagination(gqlToString(query), {
         eventId,
+        userId: fid.toString(), // fid to filter out
     });
 
     if (response) {

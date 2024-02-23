@@ -1,55 +1,41 @@
 import {
-    BASE_URL,
-    NO_POAPS_FOUND,
-    WALLET_NOT_CONNECTED_IMAGE_URL,
-} from "@/lib/constants";
-import findPoapsForAddress from "@/lib/findPoapsForAddress";
-import { UserData, pickRandomElements } from "@/lib/utils";
-import { Redis } from "@upstash/redis";
-import {
     FrameActionPayload,
     FrameButtonsType,
     getAddressForFid,
     getFrameHtml,
-    validateFrameMessage,
 } from "frames.js";
-import { NextRequest, NextResponse } from "next/server";
+import {
+    BASE_URL,
+    NO_POAPS_FOUND,
+    WALLET_NOT_CONNECTED_IMAGE_URL,
+} from "../constants";
+import { NextResponse } from "next/server";
+import findPoapsForAddress from "../findPoapsForAddress";
+import { UserData, pickRandomElements } from "../utils";
+import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
     url: process.env.REDIS_URL as string,
     token: process.env.REDIS_TOKEN as string,
 });
 
-async function getResponse(req: NextRequest) {
+export default async function findUserPoaps(body: FrameActionPayload) {
     let accountAddress: string | undefined;
-
     try {
-        const body: FrameActionPayload = await req.json();
-
-        const { isValid, message } = await validateFrameMessage(body, {
-            hubHttpUrl: process.env.HUB_URL,
-            hubRequestOptions: {
-                headers: {
-                    api_key: process.env.HUB_KEY as string,
+        accountAddress = await getAddressForFid({
+            fid: body.untrustedData.fid,
+            options: {
+                fallbackToCustodyAddress: true,
+                hubHttpUrl: process.env.HUB_URL,
+                hubRequestOptions: {
+                    headers: {
+                        api_key: process.env.HUB_KEY as string,
+                    },
                 },
             },
         });
 
-        if (!isValid || !message) {
-            return new NextResponse(
-                getFrameHtml({
-                    version: "vNext",
-                    image: ERROR_IMAGE_URL,
-                    buttons: [{ label: "Try Again", action: "post" }],
-                    postUrl: `${BASE_URL}/api/findUserPoaps`,
-                })
-            );
-        }
-
-        accountAddress = await getAddressForFid({
-            fid: body.untrustedData.fid,
-            options: { fallbackToCustodyAddress: true },
-        });
+        console.log(accountAddress);
 
         if (!accountAddress) {
             return new NextResponse(
@@ -138,8 +124,4 @@ async function getResponse(req: NextRequest) {
         console.error(e);
         return new NextResponse(JSON.stringify({ status: "notok" }));
     }
-}
-
-export async function POST(req: NextRequest): Promise<Response> {
-    return getResponse(req);
 }
