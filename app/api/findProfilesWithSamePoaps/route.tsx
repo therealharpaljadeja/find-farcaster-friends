@@ -1,10 +1,9 @@
 import findProfileWithSamePoaps from "@/lib/responses/findProfilesWithSamePoaps";
+import { FrameActionPayload } from "frames.js";
 import { NextRequest } from "next/server";
 
 async function getResponse(req: NextRequest) {
-    // const xmtp = await Client.create(wallet, {
-    //     env: "production",
-    // });
+    const body: FrameActionPayload = await req.json();
 
     return await findProfileWithSamePoaps(body, req.url);
 }

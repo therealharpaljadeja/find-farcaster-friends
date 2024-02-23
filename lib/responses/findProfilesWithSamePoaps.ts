@@ -3,6 +3,7 @@ import {
     FrameButtonsType,
     getFrameHtml,
     getFrameMessage,
+    getUserDataForFid,
 } from "frames.js";
 import { NextResponse } from "next/server";
 import { BASE_URL, ERROR_IMAGE_URL, NO_FRIENDS_FOUND } from "../constants";
@@ -11,17 +12,31 @@ import findFarcasterWithPoapOfEventId, {
     Friend,
 } from "../findFarcasterProfilesWithPoapOfEventId";
 import { pickRandomElements } from "../utils";
+import { Client } from "@xmtp/xmtp-js";
+import { Wallet } from "ethers";
 
 const redis = new Redis({
     url: process.env.REDIS_URL as string,
     token: process.env.REDIS_TOKEN as string,
 });
 
+const wallet = new Wallet(process.env.PRIVATE_KEY as string);
+
 export default async function findProfileWithSamePoaps(
     body: FrameActionPayload,
     urlFromReq: string
 ) {
     let fid = body.untrustedData.fid;
+
+    const profileDetail = await getUserDataForFid({
+        fid,
+    });
+
+    let username;
+
+    if (profileDetail) {
+        username = profileDetail.username;
+    }
 
     const url = new URL(urlFromReq);
 
@@ -98,6 +113,21 @@ export default async function findProfileWithSamePoaps(
             label: "Reroll 🔄",
             target: urlFromReq,
         };
+
+        const xmtp = await Client.create(wallet, {
+            env: "production",
+        });
+
+        for await (let friend of farcasterProfiles) {
+            if (friend.isXMTPEnabled) {
+                const conv = await xmtp.conversations.newConversation(
+                    "0x4F4c70c011b065dc45a7A13Cb72E645c6a50Dde3"
+                );
+                conv.send(
+                    `@${username} found you using a Farcaster Frame \n\n @${username}'s profile here: https://warpcast.com/${username} \n\nCheck out the frame here: https://find-farcaster-friends.vercel.app`
+                );
+            }
+        }
 
         return new NextResponse(
             getFrameHtml({
