@@ -91,7 +91,7 @@ export default async function findFarcasterProfilesGoingToETHDenverRes(
                     "0x4F4c70c011b065dc45a7A13Cb72E645c6a50Dde3"
                 );
                 conv.send(
-                    `@${username} searched for Farcaster profiles attending ETHDenver and found you using a Farcaster Frame \n\nCheck out the frame here: https://find-farcaster-friends.vercel.app \n\n @${username}'s profile here: https://find-farcaster-friends.vercel.app`
+                    `@${username} searched for Farcaster profiles attending ETHDenver and found you using a Farcaster Frame \n\nCheck out the frame here: https://find-farcaster-friends.vercel.app \n\n @${username}'s profile here: https://warpcast.com/${username}`
                 );
             }
         }
