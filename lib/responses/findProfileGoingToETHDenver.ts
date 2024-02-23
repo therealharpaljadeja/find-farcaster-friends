@@ -10,15 +10,15 @@ import { pickRandomElements } from "../utils";
 import findFarcasterProfilesGoingToETHDenver from "../findFarcasterProfilesGoingToETHDenver";
 import { BASE_URL, NO_FRIENDS_FOUND } from "../constants";
 import { NextResponse } from "next/server";
-// import { Wallet } from "ethers";
-// import { Client } from "@xmtp/xmtp-js";
+import { Wallet } from "ethers";
+import { Client } from "@xmtp/xmtp-js";
 
 const redis = new Redis({
     url: process.env.REDIS_URL as string,
     token: process.env.REDIS_TOKEN as string,
 });
 
-// const wallet = new Wallet(process.env.PRIVATE_KEY as string);
+const wallet = new Wallet(process.env.PRIVATE_KEY as string);
 
 export default async function findFarcasterProfilesGoingToETHDenverRes(
     body: FrameActionPayload
@@ -80,21 +80,21 @@ export default async function findFarcasterProfilesGoingToETHDenverRes(
             label: "Reroll 🔄",
         };
 
-        // const xmtp = await Client.create(wallet, {
-        //     env: "production",
-        // });
+        const xmtp = await Client.create(wallet, {
+            env: "production",
+        });
 
         // Send XMTP messages
-        // for await (let friend of farcasterProfilesGoingToETHDenver) {
-        //     if (friend.isXMTPEnabled) {
-        //         const conv = await xmtp.conversations.newConversation(
-        //             "0x4F4c70c011b065dc45a7A13Cb72E645c6a50Dde3"
-        //         );
-        //         conv.send(
-        //             `@${username} searched for Farcaster profiles attending ETHDenver and found you using a Farcaster Frame \n\nCheck out the frame here: https://find-farcaster-friends.vercel.app \n\n @${username}'s profile here: https://find-farcaster-friends.vercel.app`
-        //         );
-        //     }
-        // }
+        for await (let friend of farcasterProfilesGoingToETHDenver) {
+            if (friend.isXMTPEnabled) {
+                const conv = await xmtp.conversations.newConversation(
+                    "0x4F4c70c011b065dc45a7A13Cb72E645c6a50Dde3"
+                );
+                conv.send(
+                    `@${username} searched for Farcaster profiles attending ETHDenver and found you using a Farcaster Frame \n\nCheck out the frame here: https://find-farcaster-friends.vercel.app \n\n @${username}'s profile here: https://find-farcaster-friends.vercel.app`
+                );
+            }
+        }
 
         return new NextResponse(
             getFrameHtml({

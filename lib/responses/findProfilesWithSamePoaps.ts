@@ -12,15 +12,15 @@ import findFarcasterWithPoapOfEventId, {
     Friend,
 } from "../findFarcasterProfilesWithPoapOfEventId";
 import { pickRandomElements } from "../utils";
-// import { Client } from "@xmtp/xmtp-js";
-// import { Wallet } from "ethers";
+import { Client } from "@xmtp/xmtp-js";
+import { Wallet } from "ethers";
 
 const redis = new Redis({
     url: process.env.REDIS_URL as string,
     token: process.env.REDIS_TOKEN as string,
 });
 
-// const wallet = new Wallet(process.env.PRIVATE_KEY as string);
+const wallet = new Wallet(process.env.PRIVATE_KEY as string);
 
 export default async function findProfileWithSamePoaps(
     body: FrameActionPayload,
@@ -114,20 +114,20 @@ export default async function findProfileWithSamePoaps(
             target: urlFromReq,
         };
 
-        // const xmtp = await Client.create(wallet, {
-        //     env: "production",
-        // });
+        const xmtp = await Client.create(wallet, {
+            env: "production",
+        });
 
-        // for await (let friend of farcasterProfiles) {
-        //     if (friend.isXMTPEnabled) {
-        //         const conv = await xmtp.conversations.newConversation(
-        //             "0x4F4c70c011b065dc45a7A13Cb72E645c6a50Dde3"
-        //         );
-        //         conv.send(
-        //             `@${username} found you using a Farcaster Frame \n\n @${username}'s profile here: https://warpcast.com/${username} \n\nCheck out the frame here: https://find-farcaster-friends.vercel.app`
-        //         );
-        //     }
-        // }
+        for await (let friend of farcasterProfiles) {
+            if (friend.isXMTPEnabled) {
+                const conv = await xmtp.conversations.newConversation(
+                    "0x4F4c70c011b065dc45a7A13Cb72E645c6a50Dde3"
+                );
+                conv.send(
+                    `@${username} found you using a Farcaster Frame \n\n @${username}'s profile here: https://warpcast.com/${username} \n\nCheck out the frame here: https://find-farcaster-friends.vercel.app`
+                );
+            }
+        }
 
         return new NextResponse(
             getFrameHtml({
